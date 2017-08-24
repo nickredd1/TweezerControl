@@ -11,26 +11,26 @@ classdef SpectrumAWG < Device
     
     methods
         function obj = SpectrumAWG(index)
-            
             % Set device type using DeviceType enumeration class
             obj.Type = DeviceType.SpectrumAWG;
- 
-             % temp
-            obj.Discovered = false;
-            obj.Initialized = false;
+            obj.Index = index;
             
             % Error checking for input argument
-            if (isnumeric(index) && index >= 0)
-                obj.Index = uint16(index);
+            if (isinteger(index))
+                obj.Index = index;
             else 
-                fprintf('Error: expected nonnegative integer variable. Received: \n')
+                sprintf('Error: expected integer variable. Received: \n');
                 disp(index)
             end  
-            
+             
+            % temp
+            obj.Discovered = false;
+            obj.Initialized = false;
         end
         
         function displayDeviceInfo(obj)
-            disp(obj.Index);
+            
+            disp 'meep'
         end
     end
     

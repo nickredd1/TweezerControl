@@ -43,7 +43,7 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% Add application layer objects to our workspace so that we may communicate
+% add application layer objects to our workspace so that we may communicate
 % through the application layer
 addpath 'Logic\Classes'
 
@@ -59,9 +59,6 @@ function GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for GUI
 handles.output = hObject;
-
-% Initialize Application Layer with verbose = true
-handles.application = Application(true);
 
 % Update handles structure
 guidata(hObject, handles);

@@ -14,37 +14,31 @@ classdef Application < handle
     end
     
     methods
-        function obj = Application(verbosity)
+        function obj = Application(verbose)
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
             
             % If verbose == true, then various commandline outputs will be
             % used throughout the appplication layer for debugging puposes
-            if (islogical(verbosity))
-                obj.Verbose = verbosity;
+            if (isboolean(verbose))
+                obj.Verbose = verbose;
             else 
-                fprintf('Error: expected boolean variable. Received: \n')
-                disp(verbosity)
-            end
+                disp 'Error: Expected boolean value'
+            
         end
         
         function discoverDevices(obj)
             obj.Devices = [];
             
-            % Attempt to discover Spectrum AWG, passing index 0 to it as it
-            % is the first (and only) SpectrumAWG device
-            newAWG = SpectrumAWG(0);
-            
-            % If newAWG was discovered and initialized, add it to Devices
-            % array. If verbose is on, then display its device information
+            % Attempt to discover Spectrum AWG
+            newAWG = SpectrumAWG();
             if ((newAWG.Discovered && newAWG.Initialized) == true)
                 obj.Devices = [obj.Devices, newAWG];
-                if obj.Verbose == true
-                    newAWG.displayDeviceInfo();
-                end
+                sprint
             end
         end
     end
+    
 end
 
