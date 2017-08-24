@@ -45,7 +45,7 @@ end
 
 % add application layer objects to our workspace so that we may communicate
 % through the application layer
-addpath 'Application\Classes'
+addpath 'Logic\Classes'
 end
 
 % --- Executes just before GUI is made visible.

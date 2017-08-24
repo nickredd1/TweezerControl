@@ -10,12 +10,12 @@ classdef Application < handle
     end
     
     methods
-        
         function obj = Application()
             % Define devices array
             obj.Devices = [];
             
-            % Create and add devices to device array
+            % Create and add devices to device array with appropriate
+            % error handling 
         end
     end
     
