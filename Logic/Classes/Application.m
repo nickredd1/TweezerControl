@@ -5,17 +5,24 @@ classdef Application < handle
     properties
         % Array holding objects representing the different devices used in
         % the program. All such devices will be represented by their own
-        % separate class. In this manner, we can dynamically add 
-        Devices
+        % separate class. In this manner, we can dynamically track devices
+        % discovered during the application initialization process 
+        AvailableDevices
     end
     
     methods
         function obj = Application()
-            % Define devices array
-            obj.Devices = [];
+            % Use helper function to query and gather devices that are
+            % available to the program currently
+            obj.discoverAvailableDevices();
             
-            % Create and add devices to device array with appropriate
-            % error handling 
+            
+        end
+        
+        function discoverAvailableDevices(obj)
+            obj.AvailableDevices = [];
+            
+            
         end
     end
     
