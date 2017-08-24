@@ -10,27 +10,39 @@ classdef SpectrumAWG < Device
     end
     
     methods
+        % Constructor for SpectrumAWG object; attempts to discover and
+        %   initialize the first Spectrum AWG that is discovered by the
+        %   program
+        %
+        % index: index of device of type SpectrumAWG; all indices for
+        %   devices of a specific type should be unique; start the indexing
+        %   at 0 for all devices
         function obj = SpectrumAWG(index)
+            
             % Set device type using DeviceType enumeration class
             obj.Type = DeviceType.SpectrumAWG;
-            obj.Index = index;
-            
-            % Error checking for input argument
-            if (isinteger(index))
-                obj.Index = index;
-            else 
-                sprintf('Error: expected integer variable. Received: \n');
-                disp(index)
-            end  
-             
-            % temp
+ 
+             % temp
             obj.Discovered = false;
             obj.Initialized = false;
+            
+            % Error checking for input argument
+            if (isnumeric(index) && index >= 0)
+                obj.Index = uint16(index);
+            else 
+                fprintf('Error: expected nonnegative integer variable. ' ...
+                    'Received: \n')
+                disp(index)
+            end  
+            
         end
         
         function displayDeviceInfo(obj)
-            
-            disp 'meep'
+            disp(obj.Index)
+        end
+        
+        function shutdownDevice(obj)
+            disp(obj.Index);
         end
     end
     

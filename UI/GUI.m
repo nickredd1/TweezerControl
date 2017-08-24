@@ -66,8 +66,6 @@ handles.application = Application(true);
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes GUI wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
 end
 
 % --- Outputs from this function are returned to the command line.
