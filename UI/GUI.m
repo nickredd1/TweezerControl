@@ -43,7 +43,9 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-addpath '../Application/Classes'
+% add application layer objects to our workspace so that we may communicate
+% through the application layer
+addpath 'Application\Classes'
 end
 
 % --- Executes just before GUI is made visible.

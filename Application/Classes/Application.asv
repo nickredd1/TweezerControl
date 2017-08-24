@@ -1,0 +1,19 @@
+classdef Application
+    %APPLICATION Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        % Array holding objects representing the different devices used in
+        % the program
+        Devices
+    end
+    
+    methods
+        
+        function obj = Application()
+            obj.Devices = [];
+        end
+    end
+    
+end
+
