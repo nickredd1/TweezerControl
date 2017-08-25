@@ -24,6 +24,14 @@ function varargout = GUI(varargin)
 
 % Last Modified by GUIDE v2.5 23-Aug-2017 16:15:46
 
+% Add application layer objects to our workspace so that we may communicate
+% through the application layer. Note that all classes from the various
+% directories MUST be manually added to path or else MATLAB will not be
+% able to use them within the workspace!
+addpath 'Logic\Classes'
+addpath 'Dependencies\Devices\Spectrum GmbH\SpcmMatlabDriver\spcm_DrvPackage'
+addpath 'Dependencies\Devices\Spectrum GmbH\SpcmMatlabDriver\spcm_LibPackage'
+
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -42,10 +50,6 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-
-% Add application layer objects to our workspace so that we may communicate
-% through the application layer
-addpath 'Logic\Classes'
 
 end
 

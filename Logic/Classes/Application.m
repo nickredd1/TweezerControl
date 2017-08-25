@@ -17,16 +17,7 @@ classdef Application < handle
     
     methods
         function obj = Application(verbosity)
-            % If verbose == true, then various commandline outputs will be
-            % used throughout the appplication layer for debugging puposes
-            if (islogical(verbosity))
-                obj.Verbose = verbosity;
-            else 
-                fprintf(['Error: expected boolean variable.'...
-                    ' Application layer not created.\nReceived:\n'])
-                disp(verbosity)
-                return;
-            end
+            obj.Verbose = verbosity;
             
             % Initialize device array, which holds objects representing
             % devices available to the program
@@ -38,13 +29,25 @@ classdef Application < handle
         end
         
         % -----------------HELPER FUNCTIONS--------------------------------
+        function set.Verbose(obj, verbosity)
+            % If verbose == true, then various commandline outputs will be
+            % used throughout the appplication layer for debugging puposes
+            if (islogical(verbosity))
+                obj.Verbose = verbosity;
+            else 
+                fprintf(['Error: expected boolean variable.'...
+                    ' Application layer not created.\nReceived:\n'])
+                disp(verbosity)
+                return;
+            end
+        end
         
         function discoverDevices(obj)
             % Attempt to discover Spectrum AWG
             obj.addDevice(DeviceType.SpectrumAWG);
             
             % Attempt to discover Basler Camera
-            obj.addDevice(DeviceType.BaslerCamera);
+            %obj.addDevice(DeviceType.BaslerCamera);
         end
         
         % Helper function for finding the number of devices of a given type
@@ -65,21 +68,22 @@ classdef Application < handle
             % We force that the index of each new device be calculated from
             % the number of already existing devices of that type. This
             % way, all the indices for a given type of device are
-            % sequential. Start indexing at 1
-            index = obj.findNumDevices(type) + 1;    
+            % sequential. Start indexing at 0 due to Windows conventions
+            index = obj.findNumDevices(type);    
             
-            % Switch through Device types
+            % Switch through Device types, making sure to pass verbosity
+            % and index
             switch type
                 case DeviceType.SpectrumAWG
-                    newDevice = SpectrumAWG(index);
+                    newDevice = SpectrumAWG(index, obj.Verbose);
                 case DeviceType.BaslerCamera
-                    newDevice = BaslerCamera(index);
+                    newDevice = BaslerCamera(index, obj.Verbose);
                 case DeviceType.AndorCamera
-                    newDevice = AndorCamera(index);
+                    newDevice = AndorCamera(index, obj.Verbose);
                 case DeviceType.NIDAQ
-                    newDevice = NIDAQ(index);
+                    newDevice = NIDAQ(index, obj.Verbose);
                 case DeviceType.NewfocusPicomotor
-                    newDevice = NewfocusPicomotor(index);
+                    newDevice = NewfocusPicomotor(index, obj.Verbose);
                 otherwise
                     fprintf(['Error: Device Type not recognized. '...
                              'No device added.\nReceived:'])
@@ -89,7 +93,7 @@ classdef Application < handle
             
             % Add new device to active devices array of application object
             % if it was discovered and initialized properly.
-            if ~(newDevice.Discovered && newDevice.Initialized)
+            if (newDevice.Discovered && newDevice.Initialized)
                 obj.Devices = [obj.Devices, newDevice];
                 if obj.Verbose == true
                     disp('New Device:')

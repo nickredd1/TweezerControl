@@ -8,6 +8,11 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
     %   allow for us to create heterogenous arrays of different objects
     
     properties 
+        % Boolean variable representing the verbosity of the device. For
+        % example, with each device that is discovered, when verbose = true
+        % we would print the device information to the terminal.
+        Verbose
+        
         % Boolean value representing if device was discovered 
         Discovered
         
@@ -17,17 +22,49 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
         % Index of device object--each device of a specific type must have
         % a unique index!
         Index
-        
+    end
+    
+    properties (Abstract = true)
         % Enumeration object representing type of device (Enumeration class
-        % defined as DeviceType.m)
+        % defined as DeviceType.m). We force this to be an abstract
+        % property as this forces the subclass to redefine the property,
+        % creating a consistent type definition across all subclasses
+        % (without having to set the property in the Constructor)
         Type
     end
     
     methods
+        % Constructor for device object. This constructor is never
+        % explicitly used, but it is called in all of the subclass
+        % constructors to initially set up the common input arguments.
+        function obj = Device(index, verbosity)
+            % Use setter for the index input argument
+            obj.Index = index;
+            
+            % Use setter for the verbosity input argument
+            obj.Verbose = verbosity;
+        end
+        
+        % Setter for Verbose property of device. Includes error checking
+        % for input argument.
+        function set.Verbose(obj, verbosity)
+            % If verbose == true, then various commandline outputs will be
+            % used throughout the appplication layer for debugging puposes
+            if (islogical(verbosity))
+                obj.Verbose = verbosity;
+            else 
+                fprintf(['Error: expected boolean variable.'...
+                    '\nReceived:\n'])
+                disp(verbosity)
+                return;
+            end
+        end
+        
         % Setter for index property of device. Includes error checking for 
-        % input argument. Start indexing at 1
-        function setIndex(obj, index)
-            if (isnumeric(index) && index > 0)
+        % input argument. Start indexing at 0 because Windows begins
+        % indexing at 0 for all connected devices 
+        function set.Index(obj, index)
+            if (isnumeric(index) && index >= 0)
                 obj.Index = uint16(index);
             else 
                 fprintf(['Error: expected nonnegative integer variable '...
@@ -40,7 +77,7 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
         
         % Setter for discovered property of device. Includes error checking for 
         % input argument 
-        function setDiscovered(obj, discovered)
+        function set.Discovered(obj, discovered)
             if (islogical(discovered))
                 obj.Discovered = discovered;
             else 
@@ -54,7 +91,7 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
         
         % Setter for initialized property of device. Includes error checking for 
         % input argument 
-        function setInitialized(obj, initialized)
+        function set.Initialized(obj, initialized)
             if (islogical(initialized))
                 obj.Initialized = initialized;
             else 

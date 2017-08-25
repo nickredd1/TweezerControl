@@ -6,7 +6,47 @@ classdef SpectrumAWG < Device
     %   through the SpectrumAWG device object.
     
     properties
-        SamplingRate
+        % Set device type using DeviceType enumeration class
+        Type = DeviceType.SpectrumAWG;
+        
+        % Sampling rate of AWG in S/s (Samples per second). Use default
+        % value of 512*10^6 S/s; must be a multiple of 1024 (2^10).
+        SamplingRate = 512e6;
+        
+        % Helper map to use label names for AWG errors. We use default
+        % settings by calling spcMCreateErrorMap() which does everything
+        % for us.
+        ErrorMap = spcMCreateErrorMap();
+        % Helper map to use label names for AWG registers. We use default
+        % settings by calling spcMCreateRegMap() which does everything
+        % for us.
+        RegMap = spcMCreateRegMap();
+        
+        % Resolution of output frequency in Hz. We use default value of
+        % 50 kHz as this has proven effective up until now.
+        FreqRes = 50e3;
+        
+        % Boolean variable representing whether or not clock output of AWG
+        % is enabled (true) or disabled (false). Default value is false as
+        % we don't care about the physical clock output of the AWG.
+        ClockOutput = false;
+        
+        % Array of reference amplitudes for each channel in mVp, or
+        % milivolts from peak to 0 mV reference (NOT mVpp). We use default
+        % value of 800 mVp as this has been used up until now as the
+        % standard.
+        ChAmplitudes = [800, 800, 800, 800];
+        
+        % Number of samples per sequence. Follows the equation
+        % NumMemSamples = SamplingRate / FreqRes. NumMemSamples must be a
+        % multiple of 1024 (2^10).
+        NumMemSamples = 10240;
+        
+        % Handle to SpectrumAWG card that driver functions use to keep
+        % track of a software-realized AWG card. (This is basically a
+        % pointer)
+        CardHandle
+        
     end
     
     methods
@@ -18,31 +58,55 @@ classdef SpectrumAWG < Device
         %   devices of a specific type should be unique; start the indexing
         %   at 0 for all devices
         function obj = SpectrumAWG(index)
+            % Use setter for the index input argument, inherited from the
+            % Device class.
+            obj.Index = index;
             
-            % Set device type using DeviceType enumeration class
-            obj.Type = DeviceType.SpectrumAWG;
- 
-             % temp
-            obj.Discovered = false;
-            obj.Initialized = false;
+            % Init card and store infos and handle in CardHandle, using
+            % passed index as the card index to use (starts indexing at 0
+            % probably?)
+            [success, obj.CardHandle] = spcMInitCardByIdx (obj.Index);
             
-            % Error checking for input argument
-            if (isnumeric(index) && index >= 0)
-                obj.Index = uint16(index);
-            else 
-                fprintf('Error: expected nonnegative integer variable. ' ...
-                    'Received: \n')
-                disp(index)
-            end  
+            % Set discovered and initialized based on the success variable
+            % returned from spcMInitCardByIdx(). Uses property setting
+            % method of Device class
+            obj.Discovered = success;
+            obj.Initialized = success;
             
+            % If device was not succesfully discovered and initialized,
+            % then print error message to terminal and return
+            if ~(obj.Discovered && obj.Initialized)
+                spcMErrorMessageStdOut (obj.CardHandle, ...
+                    ['Error: Could not open Spectrum card.'...
+                    'Device not created \n'], true);
+                return;
+            end
+            
+            % Set SampleRate and internal PLL without clock input
+            [success, cardInfo] = spcMSetupClockPLL (cardInfo, samplerate, 0);  % clock output : enable = 1, disable = 0
+if          (success == false)
+    spcMErrorMessageStdOut (cardInfo, 'Error: spcMSetupClockPLL:\n\t', true);
+    return;
+end
+fprintf ('\n ..... Sampling rate set to %.1f MHz\n', cardInfo.setSamplerate / 1e6);
+            % Shutdown device so we don't lose handle TEMP
+            obj.shutdownDevice();
         end
         
         function displayDeviceInfo(obj)
-            disp(obj.Index)
+            % Extend inherited displayDeviceInfo() function
+            displayDeviceInfo@Device(obj);
+            
+            % Use device function to print card info to terminal
+            cardInfoText = spcMPrintCardInfo (obj.CardHandle);
+            fprintf ('%s\n', cardInfoText)
         end
         
         function shutdownDevice(obj)
-            disp(obj.Index);
+            disp('Shutting down SpectrumAWG device')
+            % Delete AWG so that we can open it up again
+            spcMCloseCard (obj.CardHandle);
+            disp('AWG stopped')
         end
     end
     
