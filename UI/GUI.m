@@ -61,7 +61,7 @@ function GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 % Initialize Application Layer with verbose = true
-handles.application = Application(1);
+handles.application = Application(true);
 
 % Update handles structure
 guidata(hObject, handles);

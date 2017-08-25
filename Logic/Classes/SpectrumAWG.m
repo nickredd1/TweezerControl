@@ -21,13 +21,13 @@ classdef SpectrumAWG < Device
             % Set device type using DeviceType enumeration class
             obj.Type = DeviceType.SpectrumAWG;
  
-             % temp
-            obj.Discovered = false;
-            obj.Initialized = false;
-            
             % Use setter for the index input argument, inherited from the
             % Device class
             obj.setIndex(index);
+            
+             % temp
+            obj.setDiscovered(false);
+            obj.setInitialized(false);
         end
         
         function displayDeviceInfo(obj)

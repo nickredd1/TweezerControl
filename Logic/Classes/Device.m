@@ -30,13 +30,42 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
             if (isnumeric(index) && index >= 0)
                 obj.Index = uint16(index);
             else 
-                fprintf(['Error: expected nonnegative integer variable'...
-                    'for index. No device of type %s was created.\n' ...
-                    'Received:'], obj.Type)
+                fprintf(['Error: expected nonnegative integer variable '...
+                    'for Index.\n' ...
+                    'Received:'])
                 disp(index)
                 return;
             end 
         end
+        
+        % Setter for discovered property of device. Includes error checking for 
+        % input argument 
+        function setDiscovered(obj, discovered)
+            if (islogical(discovered))
+                obj.Discovered = discovered;
+            else 
+                fprintf(['Error: expected boolean variable '...
+                    'for Discovered.\n' ...
+                    'Received:'])
+                disp(discovered)
+                return;
+            end 
+        end
+        
+        % Setter for initialized property of device. Includes error checking for 
+        % input argument 
+        function setInitialized(obj, initialized)
+            if (islogical(initialized))
+                obj.Initialized = initialized;
+            else 
+                fprintf(['Error: expected boolean variable '...
+                    'for Initialized.\n' ...
+                    'Received:'])
+                disp(initialized)
+                return;
+            end 
+        end
+        
         
         % Method for displaying the respective device's
         % information--note that each subclass of Device should

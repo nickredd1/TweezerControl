@@ -9,7 +9,9 @@ classdef Application < handle
         % discovered during the application initialization process 
         Devices
         
-        % Boolean variable
+        % Boolean variable representing the verbosity of the program. For
+        % example, with each device that is discovered, when verbose = true
+        % we would print the device information to the terminal.
         Verbose
     end
     
@@ -21,7 +23,7 @@ classdef Application < handle
                 obj.Verbose = verbosity;
             else 
                 fprintf(['Error: expected boolean variable.'...
-                    ' Application layer not created. \nReceived:\n'])
+                    ' Application layer not created.\nReceived:\n'])
                 disp(verbosity)
                 return;
             end
@@ -87,7 +89,7 @@ classdef Application < handle
             
             % Add new device to active devices array of application object
             % if it was discovered and initialized properly.
-            if ~(newDevice.Discovered && newDevice.Initialized)
+            if (newDevice.Discovered && newDevice.Initialized)
                 obj.Devices = [obj.Devices, newDevice];
                 if obj.Verbose == true
                     disp('New Device:')
