@@ -20,8 +20,10 @@ classdef Application < handle
             if (islogical(verbosity))
                 obj.Verbose = verbosity;
             else 
-                fprintf('Error: expected boolean variable. Received: \n')
+                fprintf(['Error: expected boolean variable.'...
+                    ' Application layer not created. \nReceived:\n'])
                 disp(verbosity)
+                return;
             end
             
             % Initialize device array, which holds objects representing
@@ -33,11 +35,14 @@ classdef Application < handle
             obj.discoverDevices();
         end
         
+        % -----------------HELPER FUNCTIONS--------------------------------
+        
         function discoverDevices(obj)
-            % Attempt to discover Spectrum AWG, passing index 0 to it as it
-            % is the first (and only) SpectrumAWG device
+            % Attempt to discover Spectrum AWG
             obj.addDevice(DeviceType.SpectrumAWG);
             
+            % Attempt to discover Basler Camera
+            obj.addDevice(DeviceType.BaslerCamera);
         end
         
         % Helper function for finding the number of devices of a given type
@@ -82,9 +87,10 @@ classdef Application < handle
             
             % Add new device to active devices array of application object
             % if it was discovered and initialized properly.
-            if (newDevice.Discovered && newDevice.Initialized)
+            if ~(newDevice.Discovered && newDevice.Initialized)
                 obj.Devices = [obj.Devices, newDevice];
                 if obj.Verbose == true
+                    disp('New Device:')
                     newDevice.displayDeviceInfo();
                 end
             end

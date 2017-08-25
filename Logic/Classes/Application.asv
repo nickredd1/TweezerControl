@@ -33,10 +33,17 @@ classdef Application < handle
             obj.discoverDevices();
         end
         
+        % -----------------HELPER FUNCTIONS--------------------------------
+        
         function discoverDevices(obj)
             % Attempt to discover Spectrum AWG, passing index 0 to it as it
             % is the first (and only) SpectrumAWG device
-            obj.addDevice(DeviceType.SpectrumAWG, 0);
+            obj.addDevice(DeviceType.SpectrumAWG);
+            
+            obj.addDevice(DeviceType.BaslerCamera);
+            obj.addDevice(DeviceType.BaslerCamera);
+            obj.addDevice(DevicetType.S
+            obj.Devices
         end
         
         % Helper function for finding the number of devices of a given type
@@ -54,8 +61,13 @@ classdef Application < handle
         % application. 
         function addDevice(obj, type)
             newDevice = 0;
-            % 
-            index = obj.numDevices(type);    
+            % We force that the index of each new device be calculated from
+            % the number of already existing devices of that type. This
+            % way, all the indices for a given type of device are
+            % sequential.
+            index = obj.findNumDevices(type);    
+            
+            % Switch through Device types
             switch type
                 case DeviceType.SpectrumAWG
                     newDevice = SpectrumAWG(index);
@@ -70,12 +82,13 @@ classdef Application < handle
                 otherwise
                     fprintf(['Error: Device Type not recognized. '...
                              'No device added.\nReceived:'])
-                    error = true;
                     disp(type)
                     return;
             end
             
-            if (newDevice.Discovered && newDevice.Initialized)
+            % Add new device to active devices array of application object
+            % if it was discovered and initialized properly.
+            if ~(newDevice.Discovered && newDevice.Initialized)
                 obj.Devices = [obj.Devices, newDevice];
                 if obj.Verbose == true
                     newDevice.displayDeviceInfo();

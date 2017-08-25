@@ -31,11 +31,12 @@ classdef SpectrumAWG < Device
         end
         
         function displayDeviceInfo(obj)
-            disp(obj.Index)
+            % Extend inherited displayDeviceInfo() function
+            displayDeviceInfo@Device(obj);
         end
         
         function shutdownDevice(obj)
-            disp(obj.Index)
+            disp('shutting down')
         end
     end
     
