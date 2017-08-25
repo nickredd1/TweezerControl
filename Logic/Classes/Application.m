@@ -65,8 +65,8 @@ classdef Application < handle
             % We force that the index of each new device be calculated from
             % the number of already existing devices of that type. This
             % way, all the indices for a given type of device are
-            % sequential.
-            index = obj.findNumDevices(type);    
+            % sequential. Start indexing at 1
+            index = obj.findNumDevices(type) + 1;    
             
             % Switch through Device types
             switch type
@@ -89,7 +89,7 @@ classdef Application < handle
             
             % Add new device to active devices array of application object
             % if it was discovered and initialized properly.
-            if (newDevice.Discovered && newDevice.Initialized)
+            if ~(newDevice.Discovered && newDevice.Initialized)
                 obj.Devices = [obj.Devices, newDevice];
                 if obj.Verbose == true
                     disp('New Device:')

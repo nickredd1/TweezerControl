@@ -25,9 +25,9 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
     
     methods
         % Setter for index property of device. Includes error checking for 
-        % input argument 
+        % input argument. Start indexing at 1
         function setIndex(obj, index)
-            if (isnumeric(index) && index >= 0)
+            if (isnumeric(index) && index > 0)
                 obj.Index = uint16(index);
             else 
                 fprintf(['Error: expected nonnegative integer variable '...
