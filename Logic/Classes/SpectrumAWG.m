@@ -42,7 +42,7 @@ classdef SpectrumAWG < Device
         ChAmps = [800, 800, 800, 800];
         
         % Number of samples per sequence. Follows the equation
-        % NumMemSamples = SamplingRate / FreqRes. NumMemSamples must be a
+        % NumMemSamples = SamplingRate / FreqRes.NumMemSamples must be a
         % multiple of 1024 (2^10).
         NumMemSamples = 10240;
         
@@ -89,7 +89,7 @@ classdef SpectrumAWG < Device
             [success, obj.CardHandle] = ...
                 spcMSetupClockPLL (obj.CardHandle, obj.SamplingRate,...
                 obj.ClockOutput); 
-            if (success == false)
+            if (~success)
                 spcMErrorMessageStdOut (obj.CardHandle, ...
                     'Error: spcMSetupClockPLL:\n\t', true);
                 return;
@@ -105,7 +105,7 @@ classdef SpectrumAWG < Device
             % SpectrumAWG property TriggerOutput
             [success, obj.CardHandle] = ...
                 spcMSetupTrigSoftware (obj.CardHandle, obj.TriggerOutput); 
-            if (success == false)
+            if (~success)
                 spcMErrorMessageStdOut (obj.CardHandle,...
                     'Error: spcMSetupTrigSoftware:\n\t', true);
                 return;
@@ -121,9 +121,74 @@ classdef SpectrumAWG < Device
                     spcMSetupAnalogOutputChannel(obj.CardHandle,...
                     i, obj.ChAmps(i+1), 0, 0,...
                     obj.RegMap('SPCM_STOPLVL_ZERO'), 0, 0); 
-                if (success == false)
+                if (~success)
                     spcMErrorMessageStdOut(obj.CardHandle,...
                         'Error: spcMSetupInputChannel:\n\t', true);
+                    return;
+                end
+            end
+            
+            % Divide memory in 2 segments and begin the process of setting
+            % up Replay Sequence modes, starting with segment 0 (Step 1)
+            [success, obj.CardHandle] = spcMSetupModeRepSequence(...
+                obj.CardHandle, 0, 1, 2, 0);
+            if (~success)
+                spcMErrorMessageStdOut (obj.CardHandle,...
+                    'Error: spcMSetupModeRepSequence:\n\t', true);
+                return;
+            end
+            
+            % Set up segment 0 with the correct number of samples for the
+            % size of the segment (Step 2)
+            error = spcm_dwSetParam_i32(...
+                obj.CardHandle.hDrv, ...
+                obj.RegMap('SPC_SEQMODE_WRITESEGMENT'), 0);
+            if (logical(error))
+                spcMErrorMessageStdOut (obj.CardHandle,...
+                    ['Error: spcm_dwSetParam_i32'...
+                    '(SPC_SEQMODE_WRITESEGMENT):\n\t'], true);
+                return;
+            end
+            
+            error = spcm_dwSetParam_i32(...
+                obj.CardHandle.hDrv, ...
+                obj.RegMap('SPC_SEQMODE_SEGMENTSIZE'), obj.NumMemSamples);
+            if (logical(error))
+                spcMErrorMessageStdOut (obj.CardHandle,...
+                    ['Error: spcm_dwSetParam_i32'...
+                    '(SPC_SEQMODE_SEGMENTSIZE):\n\t'], true);
+                return;
+            end
+            
+            % Output temp waveform (Step 3)
+            tempSignal = zeros(1,obj.NumMemSamples);
+            errorCode = spcm_dwSetData (obj.CardHandle.hDrv, 0,...
+                obj.NumMemSamples, 1, 0, tempSignal);
+            
+            % Set sequence steps (Step 4)
+            % Input args: step, nextStep, segment, loops, condition
+            % For Condition: 0 => End loop always, 1 => End loop on 
+            % trigger, 2 => End sequence
+            spcMSetupSequenceStep (obj.CardHandle, 0, 0, 0, 1, 0);
+           
+            % Create mask for command: Start Card and Enable Trigger
+            commandMask = bitor (obj.RegMap('M2CMD_CARD_START'),...
+                obj.RegMap('M2CMD_CARD_ENABLETRIGGER'));
+            
+            % Initiate created command
+            errorCode = spcm_dwSetParam_i32(obj.CardHandle.hDrv,...
+                obj.RegMap('SPC_M2CMD'), commandMask);
+            % Check errorCode for anything fishy
+            if (errorCode ~= 0)
+                [success, obj.CardHandle] = ...
+                    spcMCheckSetError(errorCode, obj.CardHandle);
+                if errorCode == ErrorMap('ERR_TIMEOUT')
+                    errorCode = spcm_dwSetParam_i32(obj.CardHandle.hDrv,...
+                        RegMap('SPC_M2CMD'), RegMap('M2CMD_CARD_STOP'));
+                    fprintf('OK\n ................... replay stopped\n');
+                else
+                    spcMErrorMessageStdOut(obj.CardHandle,...
+                        'Error: spcm_dwSetParam_i32:\n\t', true);
                     return;
                 end
             end
