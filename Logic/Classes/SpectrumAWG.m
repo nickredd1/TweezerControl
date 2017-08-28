@@ -42,7 +42,7 @@ classdef SpectrumAWG < Device
         ChAmps = [800, 800, 800, 800];
         
         % Number of samples per sequence. Follows the equation
-        % NumMemSamples = SamplingRate / FreqRes.NumMemSamples must be a
+        % NumMemSamples = SamplingRate / FreqRes. NumMemSamples must be a
         % multiple of 1024 (2^10).
         NumMemSamples = 10240;
         
