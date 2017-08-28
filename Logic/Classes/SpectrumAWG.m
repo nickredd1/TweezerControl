@@ -80,7 +80,7 @@ classdef SpectrumAWG < Device
             if ~(obj.Discovered && obj.Initialized)
                 spcMErrorMessageStdOut (obj.CardHandle, ...
                     ['Error: Could not open Spectrum card.'...
-                    'Device not created \n'], true);
+                    'spcMInitCardByIdx: \n\t'], true);
                 return;
             end
             
@@ -212,6 +212,7 @@ classdef SpectrumAWG < Device
             spcMCloseCard (obj.CardHandle);
             disp('AWG stopped')
         end
+        
     end
     
 end
