@@ -112,10 +112,12 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'GainAuto').SetValue('Off');
                 
-                obj.
-                obj.ExposureTime = 1000;
-                obj.Gain = 1;
-                
+%                 % TEMP---------------------------------------
+%                 methods(obj.CameraHandle.Parameters);
+%                 % Define camera parameters
+%                  methods(obj.CameraHandle.Parameters.Item(...
+%                      'Height'));
+                 
                 % At this point, the camera has been succesfully
                 % initialized so we may set initialized to true
                 obj.Initialized = true;
@@ -142,8 +144,8 @@ classdef BaslerCamera < Device
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
                 obj.CameraHandle.StreamGrabber.Stop();
 
-                % Convert pixel buffer data to uint16 image
-                image=vec2mat(uint16(grabResult.PixelData),3840);
+                % Convert pixel buffer data to uint8 image
+                image=vec2mat(uint8(grabResult.PixelData),3840);
                 
                 % Return success
                 success = true;
@@ -183,8 +185,8 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item('Height').SetValue(...
                     int64(height));
             else 
-                fprintf(['Error: expected an integer Height < '...
-                    '%d and > %d. Received:\n'], max, min);
+                fprintf(['Error: expected an integer height < '...
+                    '%d and > %d. Received:\n'], min, max);
                 disp(height)
             end
         end
@@ -198,8 +200,8 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item('Width').SetValue(...
                     int64(width));
             else 
-                fprintf(['Error: expected an integer Width < '...
-                    '%d and > %d. Received:\n'], max, min);
+                fprintf(['Error: expected an integer width < '...
+                    '%d and > %d. Received:\n'], min, max);
                 disp(width)
             end
         end
@@ -214,7 +216,7 @@ classdef BaslerCamera < Device
                     int64(offsetx));
             else 
                 fprintf(['Error: expected an integer OffsetX < '...
-                    '%d and > %d. Received:\n'], max, min);
+                    '%d and > %d. Received:\n'], min, max);
                 disp(offsetx)
             end
         end
@@ -229,7 +231,7 @@ classdef BaslerCamera < Device
                     int64(offsety));
             else 
                 fprintf(['Error: expected an integer OffsetY < '...
-                    '%d and > %d. Received:\n'], max, min);
+                    '%d and > %d. Received:\n'], min, max);
                 disp(offsety)
             end
         end
@@ -245,7 +247,7 @@ classdef BaslerCamera < Device
                     'ExposureTime').SetValue(int64(exptime));
             else 
                 fprintf(['Error: expected an integer ExposureTime < '...
-                    '%d and > %d. Received:\n'], max, min);
+                    '%d and > %d. Received:\n'], min, max);
                 disp(exptime)
             end
         end
@@ -255,14 +257,14 @@ classdef BaslerCamera < Device
         % (acA3800-14um)
         function set.Gain(obj, gain)
             min = obj.MinGain;
-            max = obj.MaxGain;
-            if (isnumeric(gain) && ((gain > min) && (gain < max)))
+            max = obj.MaGain;
+            if (isnumeric(exptime) && ((exptime > min) && (exptime < max)))
                 obj.CameraHandle.Parameters.Item(...
-                    'Gain').SetValue(double(gain));
+                    'ExposureTime').SetValue(int64(exptime));
             else 
-                fprintf(['Error: expected an integer Gain < '...
-                    '%d and > %d. Received:\n'], max, min);
-                disp(gain)
+                fprintf(['Error: expected an integer ExposureTime < '...
+                    '%d and > %d. Received:\n'], min, max);
+                disp(exptime)
             end
         end
         % --------------------END SETTER FUNCTIONS-------------------------
@@ -330,18 +332,6 @@ classdef BaslerCamera < Device
         function val = get.ExposureTime(obj)
             val = obj.CameraHandle.Parameters.Item(...
                 'ExposureTime').GetValue();
-        end
-        
-        function val = get.MaxGain(obj)
-            val = obj.CameraHandle.Parameters.Item('Gain').GetMaximum();
-        end
-        
-        function val = get.MinGain(obj)
-            val = obj.CameraHandle.Parameters.Item('Gain').GetMinimum();
-        end
-        
-        function val = get.Gain(obj)
-            val = obj.CameraHandle.Parameters.Item('Gain').GetValue();
         end
         % ------------------END GETTER FUNCTIONS---------------------------
         
