@@ -65,6 +65,9 @@ classdef BaslerCamera < Device
         
         % Gain for each image in dB
         Gain
+        
+        % Pixel format
+        PixelFormat
     end
     
     methods
@@ -95,10 +98,10 @@ classdef BaslerCamera < Device
                 % Open the camera
                 obj.CameraHandle.Open();
 
-                % Set Pixel format to 12bit mono
-                obj.CameraHandle.Parameters.Item(...
-                    'PixelFormat').SetValue('Mono12');
-
+                % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 
+                % 'Mono12'
+                obj.PixelFormat = 'Mono8';
+                
                 % Set ShutterMode to Rolling
                 obj.CameraHandle.Parameters.Item(...
                     'ShutterMode').SetValue('Rolling');
@@ -112,15 +115,13 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'GainAuto').SetValue('Off');
                 
-                obj.
-                obj.ExposureTime = 1000;
-                obj.Gain = 1;
+                % Reset sensor parameters
+                obj.resetSensor();
                 
                 % At this point, the camera has been succesfully
                 % initialized so we may set initialized to true
                 obj.Initialized = true;
                 
-                obj.shutdownDevice();
             catch ME
                 fprintf('BaslerCamera construction failed. \n');
                 obj.Initialized = false;
@@ -129,6 +130,14 @@ classdef BaslerCamera < Device
                 end
             end
              
+        end
+        
+        % Reset sensor parameters to defaults
+        function resetSensor(obj)
+            obj.Height = obj.MaxHeight - 1;
+            obj.Width = obj.MaxWidth - 1;
+            obj.Gain = 10;
+            obj.ExposureTime = 10000; % 1 ms
         end
         
         % Get image from BaslerCamera object
@@ -143,7 +152,7 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.StreamGrabber.Stop();
 
                 % Convert pixel buffer data to uint16 image
-                image=vec2mat(uint16(grabResult.PixelData),3840);
+                image=vec2mat(uint8(grabResult.PixelData),3840);
                 
                 % Return success
                 success = true;
@@ -265,6 +274,27 @@ classdef BaslerCamera < Device
                 disp(gain)
             end
         end
+        
+        % Setter method for setting obj.PixelFormat. Includes error 
+        % checking based on the actual Basler Ace Camera model 
+        % (acA3800-14um)
+        function set.PixelFormat(obj, format)
+            switch format
+                case 'Mono8'
+                    obj.CameraHandle.Parameters.Item(...
+                    'PixelFormat').SetValue(format);
+                case 'Mono12'
+                    obj.CameraHandle.Parameters.Item(...
+                    'PixelFormat').SetValue(format);
+                case 'Mono12p'
+                    obj.CameraHandle.Parameters.Item(...
+                    'PixelFormat').SetValue(format);
+                otherwise
+                    fprintf(['Error: PixelFormat not recognized.'
+                        'Received:\n']);
+                    disp(format)
+            end
+        end
         % --------------------END SETTER FUNCTIONS-------------------------
         % ---------------------GETTER FUNCTIONS----------------------------
         % Getter function abstractions for directly querying the camera for
@@ -342,6 +372,11 @@ classdef BaslerCamera < Device
         
         function val = get.Gain(obj)
             val = obj.CameraHandle.Parameters.Item('Gain').GetValue();
+        end
+        
+        function val = get.PixelFormat(obj)
+            val = obj.CameraHandle.Parameters.Item(...
+                'PixelFormat').GetValue();
         end
         % ------------------END GETTER FUNCTIONS---------------------------
         

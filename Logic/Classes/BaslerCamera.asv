@@ -65,6 +65,9 @@ classdef BaslerCamera < Device
         
         % Gain for each image in dB
         Gain
+        
+        % Pixel format
+        PixelFormat
     end
     
     methods
@@ -95,10 +98,11 @@ classdef BaslerCamera < Device
                 % Open the camera
                 obj.CameraHandle.Open();
 
-                % Set Pixel format to 12bit mono
+                % Set Pixel format to 8bit mono (FOR 12BIT MONO: use
+                % SetValue('Mono12')
                 obj.CameraHandle.Parameters.Item(...
-                    'PixelFormat').SetValue('Mono12');
-
+                    'PixelFormat').SetValue('Mono8');
+                obj.PixelFormat = 'Mono
                 % Set ShutterMode to Rolling
                 obj.CameraHandle.Parameters.Item(...
                     'ShutterMode').SetValue('Rolling');
@@ -112,17 +116,13 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'GainAuto').SetValue('Off');
                 
-%                 % TEMP---------------------------------------
-%                 methods(obj.CameraHandle.Parameters);
-%                 % Define camera parameters
-%                  methods(obj.CameraHandle.Parameters.Item(...
-%                      'Height'));
-                 
+                % Reset sensor parameters
+                obj.resetSensor();
+                
                 % At this point, the camera has been succesfully
                 % initialized so we may set initialized to true
                 obj.Initialized = true;
                 
-                obj.shutdownDevice();
             catch ME
                 fprintf('BaslerCamera construction failed. \n');
                 obj.Initialized = false;
@@ -131,6 +131,14 @@ classdef BaslerCamera < Device
                 end
             end
              
+        end
+        
+        % Reset sensor parameters to defaults
+        function resetSensor(obj)
+            obj.Height = obj.MaxHeight - 1;
+            obj.Width = obj.MaxWidth - 1;
+            obj.Gain = 10;
+            obj.ExposureTime = 10000; % 1 ms
         end
         
         % Get image from BaslerCamera object
@@ -144,7 +152,7 @@ classdef BaslerCamera < Device
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
                 obj.CameraHandle.StreamGrabber.Stop();
 
-                % Convert pixel buffer data to uint8 image
+                % Convert pixel buffer data to uint16 image
                 image=vec2mat(uint8(grabResult.PixelData),3840);
                 
                 % Return success
@@ -185,8 +193,8 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item('Height').SetValue(...
                     int64(height));
             else 
-                fprintf(['Error: expected an integer height < '...
-                    '%d and > %d. Received:\n'], min, max);
+                fprintf(['Error: expected an integer Height < '...
+                    '%d and > %d. Received:\n'], max, min);
                 disp(height)
             end
         end
@@ -200,8 +208,8 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item('Width').SetValue(...
                     int64(width));
             else 
-                fprintf(['Error: expected an integer width < '...
-                    '%d and > %d. Received:\n'], min, max);
+                fprintf(['Error: expected an integer Width < '...
+                    '%d and > %d. Received:\n'], max, min);
                 disp(width)
             end
         end
@@ -216,7 +224,7 @@ classdef BaslerCamera < Device
                     int64(offsetx));
             else 
                 fprintf(['Error: expected an integer OffsetX < '...
-                    '%d and > %d. Received:\n'], min, max);
+                    '%d and > %d. Received:\n'], max, min);
                 disp(offsetx)
             end
         end
@@ -231,7 +239,7 @@ classdef BaslerCamera < Device
                     int64(offsety));
             else 
                 fprintf(['Error: expected an integer OffsetY < '...
-                    '%d and > %d. Received:\n'], min, max);
+                    '%d and > %d. Received:\n'], max, min);
                 disp(offsety)
             end
         end
@@ -247,7 +255,7 @@ classdef BaslerCamera < Device
                     'ExposureTime').SetValue(int64(exptime));
             else 
                 fprintf(['Error: expected an integer ExposureTime < '...
-                    '%d and > %d. Received:\n'], min, max);
+                    '%d and > %d. Received:\n'], max, min);
                 disp(exptime)
             end
         end
@@ -257,14 +265,14 @@ classdef BaslerCamera < Device
         % (acA3800-14um)
         function set.Gain(obj, gain)
             min = obj.MinGain;
-            max = obj.MaGain;
-            if (isnumeric(exptime) && ((exptime > min) && (exptime < max)))
+            max = obj.MaxGain;
+            if (isnumeric(gain) && ((gain > min) && (gain < max)))
                 obj.CameraHandle.Parameters.Item(...
-                    'ExposureTime').SetValue(int64(exptime));
+                    'Gain').SetValue(double(gain));
             else 
-                fprintf(['Error: expected an integer ExposureTime < '...
-                    '%d and > %d. Received:\n'], min, max);
-                disp(exptime)
+                fprintf(['Error: expected an integer Gain < '...
+                    '%d and > %d. Received:\n'], max, min);
+                disp(gain)
             end
         end
         % --------------------END SETTER FUNCTIONS-------------------------
@@ -332,6 +340,18 @@ classdef BaslerCamera < Device
         function val = get.ExposureTime(obj)
             val = obj.CameraHandle.Parameters.Item(...
                 'ExposureTime').GetValue();
+        end
+        
+        function val = get.MaxGain(obj)
+            val = obj.CameraHandle.Parameters.Item('Gain').GetMaximum();
+        end
+        
+        function val = get.MinGain(obj)
+            val = obj.CameraHandle.Parameters.Item('Gain').GetMinimum();
+        end
+        
+        function val = get.Gain(obj)
+            val = obj.CameraHandle.Parameters.Item('Gain').GetValue();
         end
         % ------------------END GETTER FUNCTIONS---------------------------
         

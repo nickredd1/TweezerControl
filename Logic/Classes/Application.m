@@ -26,6 +26,13 @@ classdef Application < handle
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
+            
+            [~, image] = obj.Devices(2).capture();
+            figure
+            imshow(image)
+            
+            % Shutdown devices
+            obj.shutdownDevices();
         end
         
         % -----------------HELPER FUNCTIONS--------------------------------
@@ -41,7 +48,11 @@ classdef Application < handle
                 return;
             end
         end
-        
+        function shutdownDevices(obj)
+            for i = 1:length(obj.Devices)
+                obj.Devices(i).shutdownDevice();
+            end
+        end
         function discoverDevices(obj)
             % Attempt to discover Spectrum AWG
             obj.addDevice(DeviceType.SpectrumAWG);

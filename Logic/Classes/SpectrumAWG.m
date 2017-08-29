@@ -179,9 +179,6 @@ classdef SpectrumAWG < Device
             
             % Check errorCode for anything fishy
             obj.checkError(errorCode);
-            
-            % ----------------------------TEMP-----------------------------
-            obj.shutdownDevice();
         end
         
         % Display device info (inherited from Device class)
@@ -196,10 +193,9 @@ classdef SpectrumAWG < Device
         
         % Shutdown device (inherited from Device class)
         function shutdownDevice(obj)
-            disp('Shutting down SpectrumAWG device')
             % Delete AWG so that we can open it up again
             spcMCloseCard (obj.CardHandle);
-            disp('AWG stopped')
+            disp('SpectrumAWG stopped')
         end
         
         % Helper function for checking error codes returned from spectrum 
