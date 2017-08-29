@@ -15,18 +15,38 @@ classdef BaslerCamera < Device
         % .NET assembly created from Basler Camera driver files
         NETAssembly
         
-        % Height of image produced by BaslerCamera in pixels
+    end
+    
+    properties (Dependent)
+        % Various dependent image cropping parameters that, when accesses,
+        % always query the Basler Ace Camera model (acA3800-14um) driver 
+        % methods. All are in units of pixels
+        MaxHeight
+       
+        MinHeight
+        
+        MaxWidth
+        
+        MinWidth
+        
+        MaxOffsetX
+        
+        MinOffsetX
+        
+        MaxOffsetY
+        
+        MinOffsetY
+        
         Height
         
-        % Width of image produced by BaslerCamera in pixels
         Width
         
-        % X-axis offset of image produced by BaslerCamera in pixels
         OffsetX
         
-        % Y-axis offset of image produced by BaslerCamera in pixels
         OffsetY
     end
+    
+    
     
     methods
         % Constructor for BaslerCamera object; attempts to discover and
@@ -54,29 +74,55 @@ classdef BaslerCamera < Device
             % Open the camera
             obj.CameraHandle.Open();
             
+            methods(obj.CameraHandle.Parameters)
             % Define camera parameters
-            obj.CameraHandle.Parameters.Item(...
-                'Height').SetValue(obj.Height);
-            obj.CameraHandle.Parameters.Item(...
-                'OffsetY').SetValue(obj.OffsetY);
-            obj.CameraHandle.Parameters.Item(...
-                'Width').SetValue(obj.Width);
-            obj.CameraHandle.Parameters.Item(...
-                'OffsetX').SetValue(obj.OffsetX);
-            
+             methods(obj.CameraHandle.Parameters.Item(...
+                 'Height'))
+             obj.CameraHandle.Parameters.Item(...
+                 'OffsetX').GetMinimum()
+             obj.CameraHandle.Parameters.Item(...
+                 'OffsetX').SetValue(1)
+%             obj.CameraHandle.Parameters.Item(...
+%                 'OffsetY').SetValue(obj.OffsetY);
+%             obj.CameraHandle.Parameters.Item(...
+%                 'Width').SetValue(obj.Width);
+%             obj.CameraHandle.Parameters.Item(...
+%                 'OffsetX').SetValue(obj.OffsetX);
+%             
              % temp
             obj.Initialized = false;
             obj.shutdownDevice();
         end
         
+        % ---------------------SETTER FUNCTIONS----------------------------
         % Setter method for setting obj.Height. Includes error checking
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.Height(obj, height)
+            min = obj.MinHeight;
+            max = obj.MaxHeight;
+            if (isnumeric(height) && ((height > min) && (height < max)))
+                obj.CameraHandle.Parameters.Item('Height').SetValue(...
+                    uint16(height));
+            else 
+                fprintf(['Error: expected an integer height < '...
+                    '%d and > %d. Received:\n'], min, max);
+                disp(height)
+            end
         end
         
         % Setter method for setting obj.Width. Includes error checking
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.Width(obj, width)
+            min = obj.MinWidth;
+            max = obj.MaxWidth;
+            if (isnumeric(width) && ((width > min) && (width < max)))
+                obj.CameraHandle.Parameters.Item('Width').SetValue(...
+                    uint16(width));
+            else 
+                fprintf(['Error: expected an integer width < '...
+                    '%d and > %d. Received:\n'], min, max);
+                disp(width)
+            end
         end
         
         % Setter method for setting obj.OffsetX. Includes error checking
@@ -88,6 +134,59 @@ classdef BaslerCamera < Device
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.OffsetY(obj, offsety)
         end
+        
+        % --------------------END SETTER FUNCTIONS-------------------------
+        % ---------------------GETTER FUNCTIONS----------------------------
+        % Getter function abstractions for directly querying the camera for
+        % its relevant parameters. Uses methods provided by driver.
+        function val = get.MaxHeight(obj)
+            val = obj.CameraHandle.Parameters.Item('Height').GetMaximum();
+        end
+        
+        function val = get.MinHeight(obj)
+            val = obj.CameraHandle.Parameters.Item('Height').GetMinimum();
+        end
+        
+        function val = get.MaxWidth(obj)
+            val = obj.CameraHandle.Parameters.Item('Width').GetMaximum();
+        end
+        
+        function val = get.MinWidth(obj)
+            val = obj.CameraHandle.Parameters.Item('Width').GetMinimum();
+        end
+        
+        function val = get.MaxOffsetX(obj)
+            val = obj.CameraHandle.Parameters.Item('OffsetX').GetMaximum();
+        end
+        
+        function val = get.MinOffsetX(obj)
+            val = obj.CameraHandle.Parameters.Item('OffsetX').GetMinimum();
+        end
+        
+        function val = get.MaxOffsetY(obj)
+            val = obj.CameraHandle.Parameters.Item('OffsetY').GetMaximum();
+        end
+        
+        function val = get.MinOffsetY(obj)
+            val = obj.CameraHandle.Parameters.Item('OffsetY').GetMinimum();
+        end
+        
+        function val = get.Height(obj)
+            val = obj.CameraHandle.Parameters.Item('Height').GetValue();
+        end
+        
+        function val = get.Width(obj)
+            val = obj.CameraHandle.Parameters.Item('Width').GetValue();
+        end
+        
+        function val = get.OffsetX(obj)
+            val = obj.CameraHandle.Parameters.Item('OffsetX').GetValue();
+        end
+        
+        function val = get.OffsetY(obj)
+            val = obj.CameraHandle.Parameters.Item('OffsetY').GetValue();
+        end
+        % ------------------END GETTER FUNCTIONS---------------------------
         
         % Get image from BaslerCamera object, given
         function [success, image] = getImage(obj)
