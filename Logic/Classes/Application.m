@@ -47,7 +47,7 @@ classdef Application < handle
             obj.addDevice(DeviceType.SpectrumAWG);
             
             % Attempt to discover Basler Camera
-            %obj.addDevice(DeviceType.BaslerCamera);
+            obj.addDevice(DeviceType.BaslerCamera);
         end
         
         % Helper function for finding the number of devices of a given type

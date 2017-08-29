@@ -6,7 +6,11 @@ classdef BaslerCamera < Device
     %   through the BaslerCamera device object.
     
     properties
+        % Set device type using DeviceType enumeration class
+        Type = DeviceType.BaslerCamera;
         
+        % Handle to Camera object (from MATLAB driver)
+        CameraHandle
     end
     
     methods
@@ -17,17 +21,17 @@ classdef BaslerCamera < Device
         % index: index of device of type BaslerCamera; all indices for
         %   devices of a specific type should be unique; start the indexing
         %   at 0 for all devices
-        function obj = BaslerCamera(index)
-            % Set device type using DeviceType enumeration class
-            obj.Type = DeviceType.BaslerCamera;
- 
+        function obj = BaslerCamera(index, verbosity)
+            obj = obj@Device(index, verbosity);
+            dllName=['Dependencies\Devices\Basler Ace camera'...
+                '\Drivers\Basler.Pylon.dll'];
+            asm=NET.addAssembly(dllName);
+            
              % temp
             obj.Discovered = false;
             obj.Initialized = false;
             
-            % Use setter for the index input argument, inherited from the
-            % Device class
-            obj.setIndex(index);
+            
         end
         
         function displayDeviceInfo(obj)
