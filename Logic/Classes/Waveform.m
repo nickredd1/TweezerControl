@@ -3,19 +3,19 @@ classdef Waveform < handle
     %   Detailed explanation goes here
     
     properties
-        % Number of tweezers defined in our waveform. There is a one-to-one
-        % relation between the number of frequency components and number of
-        % tweezers defined in the waveform
-        NumTweezers
-        
-        % Center frequency of tweezers in Hz
-        CenterFreq
-        
-        % Frequency separation of adjacent tweezers in Hz
-        TweezerSep
-        
-        % Array of frequencies composing the waveform in Hz
+        % Array of frequencies composing the waveform in Hz. Length of
+        % array is equal to the number of tweezers in our waveform--same
+        % applies for Amps and Phases
         Freqs
+        
+        % Variable containing the number of frequency components of the
+        % waveform object
+        NumFreqs
+        
+        % Variable containing number of steps (i.e., samples) in each
+        % discrete waveform period which is calculated during the
+        % construction of a waveform object
+        NumSteps
         
         % Array of aplitudes of frequencies composing the waveform in
         % normalized units (note that these units are likely normalized to
@@ -25,56 +25,81 @@ classdef Waveform < handle
         % Array of phases of frequencies
         Phases
         
-        % Update function
-        Func
+        % Discretized signal calculated during the construction of a
+        % waveform object
+        Signal
     end
     
     methods
-        function obj = Waveform(numTweezers, tweezerSep, centerFreq, amps, phases, func)
-            obj.NumTweezers = numTweezers;
+        function obj = Waveform(freqs, amps, phases, t)
+            obj.Freqs = freqs;
+            obj.Amps = amps;
+            obj.Phases = phases;
+            obj.NumFreqs = length(freqs);
+            obj.NumSteps = length(t);
+            
+             % Make sure freqs, amps, and phases are all arrays of equal
+            % length
+            if ~((obj.NumFreqs == length(amps)) ...
+                    && (obj.NumFreqs == length(phases)))
+                fprintf(['Error: expected Freqs, Amps, and Phases to '...
+                    'be equal length arrays.\n'])
+                return;
+            end
+            
+            % Compute discretized period of Waveform, ensuring to sum all
+            % of the frequency components properly
+            signals = zeros(obj.NumFreqs, obj.NumSteps);
+            for i = 1:obj.NumFreqs
+                signals(i,1:obj.NumSteps) = ...
+                    amps(i)*sin(2*pi*freqs(i)*t + phases(i));
+            end
+            signals = sum(signals)/obj.NumFreqs;
+            
+            obj.Signal = signals;
         end
         
-        % Helper function for setting number of tweezers. Includes error
-        % checking
-        function set.NumTweezers(obj, numTweezers)
-            if (isnumeric(numTweezers) && numTweezers >= 0)
-                obj.NumTweezers = numTweezers;
+        % Helper function for setting frequencies of Waveform object
+        function set.Freqs(obj, freqs)
+            if (isnumeric(freqs))
+                % Make sure we have double array
+                obj.Freqs = double(freqs);
             else 
-                fprintf(['Error: expected nonnegative integer variable '...
-                    'for NumTweezers.\n' ...
+                fprintf(['Error: expected numeric array of frequencies '...
+                    'for Freqs.\n' ...
                     'Received:'])
-                disp(numTweezers)
+                disp(freqs)
                 return;
             end
         end
         
-        % Helper function for setting center frequency of Waveform object
-        function set.CenterFreq(obj, center)
-            if (isnumeric(center) && center >= 0)
-                obj.CenterFreq = center;
+         % Helper function for setting amplitude of Waveform object
+        function set.Amps(obj, amps)
+            if (isnumeric(amps))
+                % Make sure we have double array
+                obj.Amps = double(amps);
             else 
-                fprintf(['Error: expected nonnegative variable '...
-                    'for CenterFreq.\n' ...
+                fprintf(['Error: expected numeric array of frequencies '...
+                    'for Amps.\n' ...
                     'Received:'])
-                disp(center)
+                disp(amps)
                 return;
             end
         end
         
-        % Helper function for setting separation of tweezer frequencies of
-        % Waveform object
-        function set.TweezerSep(obj, sep)
-            if (isnumeric(sep) && sep > 0)
-                obj.TweezerSep = sep;
+         % Helper function for setting phases of Waveform object
+        function set.Phases(obj, phases)
+            if (isnumeric(phases))
+                % Make sure we have double array
+                obj.Phases = double(phases);
             else 
-                fprintf(['Error: expected nonzero variable '...
-                    'for TweezerSep.\n' ...
+                fprintf(['Error: expected numeric array of phases '...
+                    'for Phases.\n' ...
                     'Received:'])
-                disp(sep)
+                disp(phases)
                 return;
             end
         end
-        
         
     end
     
