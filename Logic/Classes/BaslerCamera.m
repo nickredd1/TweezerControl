@@ -46,8 +46,6 @@ classdef BaslerCamera < Device
         OffsetY
     end
     
-    
-    
     methods
         % Constructor for BaslerCamera object; attempts to discover and
         %   initialize the first Basler Camera that is discovered by the
@@ -78,17 +76,11 @@ classdef BaslerCamera < Device
             % Define camera parameters
              methods(obj.CameraHandle.Parameters.Item(...
                  'Height'))
-             obj.CameraHandle.Parameters.Item(...
-                 'OffsetX').GetMinimum()
-             obj.CameraHandle.Parameters.Item(...
-                 'OffsetX').SetValue(1)
-%             obj.CameraHandle.Parameters.Item(...
-%                 'OffsetY').SetValue(obj.OffsetY);
-%             obj.CameraHandle.Parameters.Item(...
-%                 'Width').SetValue(obj.Width);
-%             obj.CameraHandle.Parameters.Item(...
-%                 'OffsetX').SetValue(obj.OffsetX);
-%             
+             
+             obj.Height = 100;
+             obj.Width = 100;
+             obj.OffsetX = 100;
+             obj.OffsetY = 100;
              % temp
             obj.Initialized = false;
             obj.shutdownDevice();
@@ -96,13 +88,15 @@ classdef BaslerCamera < Device
         
         % ---------------------SETTER FUNCTIONS----------------------------
         % Setter method for setting obj.Height. Includes error checking
-        % based on the actual Basler Ace Camera model (acA3800-14um)
+        % based on the actual Basler Ace Camera model (acA3800-14um). NOTE:
+        % MAKE SURE THAT YOU PASS A SIGNED 64-BIT INTEGER TO SetValue() OR
+        % ELSE IT WILL THROW AN ERROR
         function set.Height(obj, height)
             min = obj.MinHeight;
             max = obj.MaxHeight;
             if (isnumeric(height) && ((height > min) && (height < max)))
                 obj.CameraHandle.Parameters.Item('Height').SetValue(...
-                    uint16(height));
+                    int64(height));
             else 
                 fprintf(['Error: expected an integer height < '...
                     '%d and > %d. Received:\n'], min, max);
@@ -117,7 +111,7 @@ classdef BaslerCamera < Device
             max = obj.MaxWidth;
             if (isnumeric(width) && ((width > min) && (width < max)))
                 obj.CameraHandle.Parameters.Item('Width').SetValue(...
-                    uint16(width));
+                    int64(width));
             else 
                 fprintf(['Error: expected an integer width < '...
                     '%d and > %d. Received:\n'], min, max);
@@ -128,11 +122,31 @@ classdef BaslerCamera < Device
         % Setter method for setting obj.OffsetX. Includes error checking
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.OffsetX(obj, offsetx)
+            min = obj.MinOffsetX;
+            max = obj.MaxOffsetX;
+            if (isnumeric(offsetx) && ((offsetx > min) && (offsetx < max)))
+                obj.CameraHandle.Parameters.Item('OffsetX').SetValue(...
+                    int64(offsetx));
+            else 
+                fprintf(['Error: expected an integer OffsetX < '...
+                    '%d and > %d. Received:\n'], min, max);
+                disp(offsetx)
+            end
         end
         
         % Setter method for setting obj.OffsetY. Includes error checking
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.OffsetY(obj, offsety)
+            min = obj.MinOffsetY;
+            max = obj.MaxOffsetY;
+            if (isnumeric(offsety) && ((offsety > min) && (offsety < max)))
+                obj.CameraHandle.Parameters.Item('OffsetY').SetValue(...
+                    int64(offsety));
+            else 
+                fprintf(['Error: expected an integer OffsetY < '...
+                    '%d and > %d. Received:\n'], min, max);
+                disp(offsety)
+            end
         end
         
         % --------------------END SETTER FUNCTIONS-------------------------
