@@ -54,6 +54,9 @@ classdef Waveform < handle
                 signals(i,1:obj.NumSteps) = ...
                     amps(i)*sin(2*pi*freqs(i)*t + phases(i));
             end
+            
+            % Scale waveform such that each frequency component contributes
+            % equally to the aplitude of the composite waveform
             signals = sum(signals)/obj.NumFreqs;
             
             obj.Signal = signals;

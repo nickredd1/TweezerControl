@@ -178,20 +178,9 @@ classdef SpectrumAWG < Device
             % Initiate created command
             errorCode = spcm_dwSetParam_i32(obj.CardHandle.hDrv,...
                 obj.RegMap('SPC_M2CMD'), commandMask);
+            
             % Check errorCode for anything fishy
-            if (errorCode ~= 0)
-                [success, obj.CardHandle] = ...
-                    spcMCheckSetError(errorCode, obj.CardHandle);
-                if errorCode == ErrorMap('ERR_TIMEOUT')
-                    errorCode = spcm_dwSetParam_i32(obj.CardHandle.hDrv,...
-                        RegMap('SPC_M2CMD'), RegMap('M2CMD_CARD_STOP'));
-                    fprintf('OK\n ................... replay stopped\n');
-                else
-                    spcMErrorMessageStdOut(obj.CardHandle,...
-                        'Error: spcm_dwSetParam_i32:\n\t', true);
-                    return;
-                end
-            end
+            obj.checkError(errorCode);
             
             % ----------------------------TEMP-----------------------------
             obj.shutdownDevice();
@@ -211,6 +200,58 @@ classdef SpectrumAWG < Device
             % Delete AWG so that we can open it up again
             spcMCloseCard (obj.CardHandle);
             disp('AWG stopped')
+        end
+        
+        % Helper function for checking error codes returned from spectrum 
+        % AWG functions
+        function checkError(obj, errorCode)
+            if (errorCode ~= 0)
+                [success, obj.CardHandle] = ...
+                    spcMCheckSetError(errorCode, obj.CardHandle);
+                if errorCode == obj.ErrorMap('ERR_TIMEOUT')
+                    errorCode = spcm_dwSetParam_i32(obj.CardHandle.hDrv,...
+                        obj.RegMap('SPC_M2CMD'),...
+                        obj.RegMap('M2CMD_CARD_STOP'));
+                    fprintf('OK\n ................... replay stopped\n');
+                else
+                    spcMErrorMessageStdOut(obj.CardHandle,...
+                        ['Error: spcm_dwSetParam_i32/'...
+                        'spcm_dwGetParam_i32:\n'], true);
+                    return;
+                end
+            end
+        end
+        
+        % Updates the SpectrumAWG object with a Waveform object wfm, which
+        % contains a pre-computed discretized signal.
+        function update(obj, wfm)
+            % Make sure we are receiving a Waveform object
+            if ~(isa(wfm,Waveform))
+                fprintf('Error: expected a Waveform object. Received:\n');
+                disp(wfm)
+            end
+            
+            % Get currentStep
+            [errorCode, currentStep] = spcm_dwGetParam_i32(...
+                obj.CardHandle.hDrv, ...
+                349950);  % 349950 = SPC_SEQMODE_STATS
+            nextStep=bitxor(currentStep,1);
+            % Check errorCode for anything fishy
+            obj.checkError(errorCode);
+            
+            % Update segment
+            errorCode = spcm_dwSetParam_i32 (obj.CardHandl.hDrv,...
+                obj.RegMap('SPC_SEQMODE_WRITESEGMENT'), nextStep);
+            obj.checkError(errorCode);
+            
+            errorCode = spcm_dwSetParam_i32 (obj.CardHandl.hDrv,...
+                obj.RegMap('SPC_SEQMODE_SEGMENTSIZE'), obj.NumMemSamples);
+            obj.checkError(errorCode);
+            
+            % set new waveform
+            errorCode = spcm_dwSetData (obj.CardHandle.hDrv, 0,...
+                obj.NumMemSamples, 1, 0, wfm.Signal);
+            obj.checkError(errorCode);
         end
         
     end
