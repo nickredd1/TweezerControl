@@ -184,6 +184,7 @@ classdef SpectrumAWG < Device
             obj.shutdownDevice();
         end
         
+        % Display device info (inherited from Device class)
         function displayDeviceInfo(obj)
             % Extend inherited displayDeviceInfo() function
             displayDeviceInfo@Device(obj);
@@ -193,6 +194,7 @@ classdef SpectrumAWG < Device
             fprintf ('%s\n', cardInfoText)
         end
         
+        % Shutdown device (inherited from Device class)
         function shutdownDevice(obj)
             disp('Shutting down SpectrumAWG device')
             % Delete AWG so that we can open it up again
