@@ -22,24 +22,18 @@ classdef BaslerCamera < Device
         %   devices of a specific type should be unique; start the indexing
         %   at 0 for all devices
         function obj = BaslerCamera(index, verbosity)
-            % Call Superclass constructor firt to avoid redundancies
-            obj = obj@Device(index, verbosity);
             
-            % Get driver dll for Basler Camera and create an assembly out
-            % of it
-            dllName=['C:\Users\Endres Lab\Desktop\TweezerControl\'...
-                'Dependencies\Devices\Basler Ace camera'...
+            obj = obj@Device(index, verbosity);
+            dllName=['Dependencies\Devices\Basler Ace camera'...
                 '\Drivers\Basler.Pylon.dll'];
             asm=NET.addAssembly(dllName);
+            obj.CameraHandle = Basler.Pylon.Camera();
             
-            % Create the CameraHandle
-            %obj.CameraHandle = Basler.Pylon.Camera();
-            
-            % Open the camera
-            %obj.CameraHandle.Open();
-            
+            obj.CameraHandle.Open();
              % temp
-            obj.Initialized = true;
+            obj.Discovered = false;
+            obj.Initialized = false;
+            
             
         end
         

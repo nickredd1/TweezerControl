@@ -10,7 +10,7 @@ classdef Application < handle
         Devices
         
         % Boolean variable representing the verbosity of the program. For
-        % example, with each device that is discovered, when verbose = true
+        % example, with each device that is initialized, when verbose=true
         % we would print the device information to the terminal.
         Verbose
     end
@@ -92,8 +92,8 @@ classdef Application < handle
             end
             
             % Add new device to active devices array of application object
-            % if it was discovered and initialized properly.
-            if (newDevice.Discovered && newDevice.Initialized)
+            % if it was  initialized properly.
+            if (newDevice.Initialized)
                 obj.Devices = [obj.Devices, newDevice];
                 if obj.Verbose == true
                     disp('New Device:')

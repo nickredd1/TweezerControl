@@ -54,9 +54,8 @@ classdef SpectrumAWG < Device
     end
     
     methods
-        % Constructor for SpectrumAWG object; attempts to discover and
-        %   initialize the first Spectrum AWG that is discovered by the
-        %   program
+        % Constructor for SpectrumAWG object; attempts to initialize the 
+        % Spectrum AWG with matching idex that is discovered by the program
         %
         % index: index of device of type SpectrumAWG; all indices for
         %   devices of a specific type should be unique; start the indexing
@@ -69,15 +68,14 @@ classdef SpectrumAWG < Device
             % probably?)
             [success, obj.CardHandle] = spcMInitCardByIdx (obj.Index);
             
-            % Set discovered and initialized based on the success variable
+            % Set initialized based on the success variable
             % returned from spcMInitCardByIdx(). Uses property setting
             % method of Device class
-            obj.Discovered = success;
             obj.Initialized = success;
             
-            % If device was not succesfully discovered and initialized,
+            % If device was not succesfully  initialized,
             % then print error message to terminal and return
-            if ~(obj.Discovered && obj.Initialized)
+            if ~(obj.Initialized)
                 spcMErrorMessageStdOut (obj.CardHandle, ...
                     ['Error: Could not open Spectrum card.'...
                     'spcMInitCardByIdx: \n\t'], true);

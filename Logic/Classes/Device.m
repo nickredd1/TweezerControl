@@ -9,12 +9,9 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
     
     properties 
         % Boolean variable representing the verbosity of the device. For
-        % example, with each device that is discovered, when verbose = true
+        % example, with each device that is initialized, when verbose = true
         % we would print the device information to the terminal.
         Verbose
-        
-        % Boolean value representing if device was discovered 
-        Discovered
         
         % Boolean value representing if device was initialized 
         Initialized
@@ -75,20 +72,6 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
             end 
         end
         
-        % Setter for discovered property of device. Includes error checking for 
-        % input argument 
-        function set.Discovered(obj, discovered)
-            if (islogical(discovered))
-                obj.Discovered = discovered;
-            else 
-                fprintf(['Error: expected boolean variable '...
-                    'for Discovered.\n' ...
-                    'Received:'])
-                disp(discovered)
-                return;
-            end 
-        end
-        
         % Setter for initialized property of device. Includes error checking for 
         % input argument 
         function set.Initialized(obj, initialized)
@@ -111,7 +94,6 @@ classdef (Abstract) Device < handle & matlab.mixin.Heterogeneous
         function displayDeviceInfo(obj)
             fprintf('Type: %s\n', obj.Type)
             fprintf('Index: %d\n', obj.Index)
-            fprintf('Discovered: %d\n', obj.Discovered)
             fprintf('Initialized: %d\n', obj.Initialized)
             fprintf('\n')
         end
