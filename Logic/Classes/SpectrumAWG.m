@@ -195,7 +195,9 @@ classdef SpectrumAWG < Device
         function shutdownDevice(obj)
             % Delete AWG so that we can open it up again
             spcMCloseCard (obj.CardHandle);
-            disp('SpectrumAWG stopped')
+            if (obj.Verbose)
+                disp('SpectrumAWG stopped')
+            end
         end
         
         % Helper function for checking error codes returned from spectrum 

@@ -27,10 +27,7 @@ classdef Application < handle
             % available to the program currently
             obj.discoverDevices();
             
-            [~, image] = obj.Devices(2).capture();
-            figure
-            imshow(image)
-            
+           
             % Shutdown devices
             obj.shutdownDevices();
         end
@@ -57,8 +54,10 @@ classdef Application < handle
             % Attempt to discover Spectrum AWG
             obj.addDevice(DeviceType.SpectrumAWG);
             
-            % Attempt to discover Basler Camera
+            % Attempt to discover Basler Camera 1
             obj.addDevice(DeviceType.BaslerCamera);
+            
+            
         end
         
         % Helper function for finding the number of devices of a given type

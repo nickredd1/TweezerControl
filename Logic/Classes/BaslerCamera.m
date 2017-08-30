@@ -93,8 +93,12 @@ classdef BaslerCamera < Device
             % Use try loop to avoid crashing program if no Basler is found
             % during initialization process
             try 
+                
                 % Create the CameraHandle
-                obj.CameraHandle = Basler.Pylon.Camera();
+                obj.CameraHandle = Basler.Pylon.Camera('21995112');
+                %obj.CameraHandle = Basler.Pylon.Camera('22179845');
+                
+                
                 % Open the camera
                 obj.CameraHandle.Open();
 
@@ -171,9 +175,14 @@ classdef BaslerCamera < Device
         
         % Shutdown device (inherited from Device class)
         function shutdownDevice(obj)
+            % Release resources
+            obj.CameraHandle.Dispose();
             % Delete BaslerCamera so that we can open it up again
             obj.CameraHandle.Close();
-            disp('BaslerCamera stopped')
+            
+            if (obj.Verbose)
+                disp('BaslerCamera stopped')
+            end
         end
     end
     
