@@ -89,16 +89,15 @@ classdef BaslerCamera < Device
                 'Dependencies\Devices\Basler Ace camera'...
                 '\Drivers\Basler.Pylon.dll'];
             obj.NETAssembly = NET.addAssembly(dllName);
+            %Basler.Pylon.CameraFinder.Enumerate().Count
             
             % Use try loop to avoid crashing program if no Basler is found
             % during initialization process
             try 
-                
                 % Create the CameraHandle
                 obj.CameraHandle = Basler.Pylon.Camera('21995112');
                 %obj.CameraHandle = Basler.Pylon.Camera('22179845');
-                
-                
+              
                 % Open the camera
                 obj.CameraHandle.Open();
 
