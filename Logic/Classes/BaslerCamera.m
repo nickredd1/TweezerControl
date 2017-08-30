@@ -15,6 +15,9 @@ classdef BaslerCamera < Device
         % .NET assembly created from Basler Camera driver files
         NETAssembly
         
+        % Variable representing serial number of physical camera
+        % represented by our BaslerCamera object
+        SerialNumber
     end
     
     properties (Dependent)
@@ -68,6 +71,11 @@ classdef BaslerCamera < Device
         
         % Pixel format
         PixelFormat
+        % ----------------------END SENSOR PARAMETERS----------------------
+        
+        % Various dependent parameters representing information about the
+        % physical Basler Camera represented by the BaslerCamera object
+        % (e.g., serial number)
     end
     
     methods
@@ -79,7 +87,7 @@ classdef BaslerCamera < Device
         %   devices of a specific type should be unique; start the indexing
         %   at 0 for all devices
 
-        function obj = BaslerCamera(index, verbosity)
+        function obj = BaslerCamera(index, verbosity, serialNumbers)
             % Call Superclass constructor firt to avoid redundancies
             obj = obj@Device(index, verbosity);
             
@@ -89,14 +97,17 @@ classdef BaslerCamera < Device
                 'Dependencies\Devices\Basler Ace camera'...
                 '\Drivers\Basler.Pylon.dll'];
             obj.NETAssembly = NET.addAssembly(dllName);
-            %Basler.Pylon.CameraFinder.Enumerate().Count
             
             % Use try loop to avoid crashing program if no Basler is found
             % during initialization process
             try 
-                % Create the CameraHandle
-                obj.CameraHandle = Basler.Pylon.Camera('21995112');
-                %obj.CameraHandle = Basler.Pylon.Camera('22179845');
+                
+                obj.SerialNumber = serialNumbers(obj.Index + 1, :);
+                
+                % Create the CameraHandle, choosing the serial number based
+                % on the position in the serialNumbers array and the index
+                % of the specific device
+                obj.CameraHandle = Basler.Pylon.Camera(obj.SerialNumber);
               
                 % Open the camera
                 obj.CameraHandle.Open();
@@ -126,6 +137,8 @@ classdef BaslerCamera < Device
                 obj.Initialized = true;
                 
             catch ME
+                % Display error message
+                disp(getReport(ME))
                 fprintf('BaslerCamera construction failed. \n');
                 obj.Initialized = false;
                 if (obj.CameraHandle.IsOpen)
@@ -298,11 +311,26 @@ classdef BaslerCamera < Device
                     obj.CameraHandle.Parameters.Item(...
                     'PixelFormat').SetValue(format);
                 otherwise
-                    fprintf(['Error: PixelFormat not recognized.'
+                    fprintf(['Error: PixelFormat not recognized. '
                         'Received:\n']);
                     disp(format)
             end
         end
+        
+        % Setter method for setting obj.SerialNumber. Includes error 
+        % checking based on the actual Basler Ace Camera model 
+        % (acA3800-14um)
+        function set.SerialNumber(obj, nums)
+            if (ischar(nums))
+                obj.SerialNumber = nums;
+            else 
+                fprintf(['Error: expected serial numbers'...
+                    'to be char array. '
+                        'Received:\n']);
+                    disp(nums)
+            end
+        end
+        
         % --------------------END SETTER FUNCTIONS-------------------------
         % ---------------------GETTER FUNCTIONS----------------------------
         % Getter function abstractions for directly querying the camera for

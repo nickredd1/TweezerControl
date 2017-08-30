@@ -13,10 +13,6 @@ classdef Application < handle
         % example, with each device that is initialized, when verbose=true
         % we would print the device information to the terminal.
         Verbose
-        
-        % Variable representing the serial numbers of Basler Ace Cameras
-        % actively connected via USB to the host computer
-        BaslerCameraSerialNumbers = ['21995112';'22179845'];
     end
     
     methods
@@ -49,21 +45,22 @@ classdef Application < handle
                 return;
             end
         end
-        
         function shutdownDevices(obj)
             for i = 1:length(obj.Devices)
                 obj.Devices(i).shutdownDevice();
             end
         end
         function discoverDevices(obj)
-            serials = obj.BaslerCameraSerialNumbers;
- 
+            
+            % -----------------------TEMP----------------------------------
+            baslerCameraSerials = ['22179845';'21995112'];
+            % -----------------------END TEMP-----------------------------
             % Attempt to discover Spectrum AWG
             obj.addDevice(DeviceType.SpectrumAWG, '');
             
             % Attempt to discover Basler Camera 1 with the defined serial
             % numbers provided
-            obj.addDevice(DeviceType.BaslerCamera, serials);
+            obj.addDevice(DeviceType.BaslerCamera, baslerCameraSerials);
             
             
         end
