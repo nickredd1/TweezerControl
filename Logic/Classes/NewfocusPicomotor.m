@@ -3,6 +3,9 @@ classdef NewfocusPicomotor < Device
     %   Detailed explanation goes here
     
     properties
+        % Set device type using DeviceType enumeration class
+        Type = DeviceType.NewfocusPicomotor;
+        
         % .NET assembly created from Newfocus Picomotor driver files
         NETAssembly
     end

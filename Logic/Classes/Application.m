@@ -31,9 +31,9 @@ classdef Application < handle
             % available to the program currently
             obj.discoverDevices();
             
-            [success, image, timestamp] = obj.Devices(1,2).capture();
-           
-            timestamp
+            [success, image, timestamp] = obj.getDevice(...
+                DeviceType.BaslerCamera, 0).capture()
+            
             % Shutdown devices
             obj.shutdownDevices();
         end
@@ -52,11 +52,22 @@ classdef Application < handle
             end
         end
         
+        function value = getDevice(obj, type, index)
+            value = 0;
+            for i = 1:length(obj.Devices)
+                if (obj.Devices(1,i).Type == type &&...
+                        obj.Devices(1,i).Index == index)
+                    value = obj.Devices(1,i);
+                end
+            end
+        end
+        
         function shutdownDevices(obj)
             for i = 1:length(obj.Devices)
                 obj.Devices(i).shutdownDevice();
             end
         end
+        
         function discoverDevices(obj)
             serials = obj.BaslerCameraSerialNumbers;
  

@@ -201,7 +201,7 @@ classdef BaslerCamera < Device
             else
                 success = false;
                 image = [];
-                timestamp = '0.0';
+                timestamp = 0;
                 fprintf('Warning: camera not open, no image acquired\n');
             end
         end
