@@ -31,8 +31,9 @@ classdef Application < handle
             % available to the program currently
             obj.discoverDevices();
             
-            [success, image, timestamp] = obj.getDevice(...
-                DeviceType.BaslerCamera, 0).capture()
+            [success, c, timestamp] = obj.getDevice(...
+                DeviceType.BaslerCamera, 0).capture();
+            imshow(c)
             
             % Shutdown devices
             obj.shutdownDevices();

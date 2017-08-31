@@ -165,8 +165,10 @@ classdef BaslerCamera < Device
         function resetSensor(obj)
             obj.Height = obj.MaxHeight - 1;
             obj.Width = obj.MaxWidth - 1;
-            obj.Gain = 10;
-            obj.ExposureTime = 10000; % 1 ms
+            obj.OffsetX = 1;
+            obj.OffsetY = 1;
+            obj.Gain = 1;
+            obj.ExposureTime = 10^6; % 1 ms
         end
         
         % Get image from BaslerCamera object. The timestamp returned is
@@ -174,17 +176,22 @@ classdef BaslerCamera < Device
         % on.
         function [success, image, timestamp] = capture(obj)
             if (obj.CameraHandle.IsOpen)
-                % Timeout of grabbing frames
-                timeout=int32(500); % 500
+                % Timeout of grabbing frames, always make sure it has
+                % enough time regardless of exposure time so give an extra
+                % 500 miliseconds
+                timeout=int32(obj.ExposureTime * 10^3 + 500); 
                 
                 % Initialize acquisition
                 obj.CameraHandle.StreamGrabber.Start();
                 grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
                 obj.CameraHandle.StreamGrabber.Stop();
-            
+                
+                numCols = obj.Width;
+                
                 % Convert pixel buffer data to uint8 image
-                image = vec2mat(uint8(grabResult.PixelData),3840);
+                image = vec2mat(uint8(grabResult.PixelData),...
+                    double(numCols));
                 
                 % Get timestamp in units of ticks, where each tick is
                 % equivalent to 1 ns. Thus, we must scale this such that it
@@ -192,9 +199,7 @@ classdef BaslerCamera < Device
                 % time at which the camera turned on, so the timestamp is
                 % basically the camera on-time until the specific image was
                 % taken
-                timestamp = grabResult.ChunkData.Item(...
-                     'ChunkTimestamp').GetValue();
-                timestamp = timestamp / 10^9;
+                timestamp = grabResult.Timestamp / 10^9;
                 
                 % Return success
                 success = true;
