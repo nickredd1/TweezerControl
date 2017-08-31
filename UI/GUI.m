@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 23-Aug-2017 16:15:46
+% Last Modified by GUIDE v2.5 31-Aug-2017 10:53:28
 
 % Add application layer objects to our workspace so that we may communicate
 % through the application layer. Note that all classes from the various
@@ -65,7 +65,7 @@ function GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 % Initialize Application Layer with verbose = true
-handles.application = Application(true);
+handles.application = Application(true, handles);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -83,13 +83,11 @@ function varargout = GUI_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 end
 
-% --- Executes on button press in pushbutton1.
-function pushbutton1_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton1 (see GCBO)
+
+
+% --- Executes during object creation, after setting all properties.
+function DeviceTable_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to DeviceTable (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% handles    empty - handles not created until after all CreateFcns called
 end
-
-    
-
-

@@ -17,12 +17,15 @@ classdef Application < handle
         % Variable representing the serial numbers of Basler Ace Cameras
         % actively connected via USB to the host computer
         BaslerCameraSerialNumbers = ['21995112';'22179845'];
+        
+        % Variable holding handles to all figures and elements of UI layer
+        Handles
     end
     
     methods
-        function obj = Application(verbosity)
+        function obj = Application(verbosity, handles)
             obj.Verbose = verbosity;
-            
+            obj.Handles = handles;
             % Initialize device array, which holds objects representing
             % devices available to the program
             obj.Devices = [];
@@ -30,10 +33,10 @@ classdef Application < handle
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
-            
-            [success, c, timestamp] = obj.getDevice(...
-                DeviceType.BaslerCamera, 0).capture();
-            imshow(c)
+            if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
+                [success, c, timestamp] = obj.getDevice(...
+                    DeviceType.BaslerCamera, 0).capture();
+            end
             
             % Shutdown devices
             obj.shutdownDevices();
@@ -54,7 +57,7 @@ classdef Application < handle
         end
         
         function value = getDevice(obj, type, index)
-            value = 0;
+            value = [];
             for i = 1:length(obj.Devices)
                 if (obj.Devices(1,i).Type == type &&...
                         obj.Devices(1,i).Index == index)
@@ -69,6 +72,7 @@ classdef Application < handle
             end
         end
         
+        % Add devices to Application Devices array
         function discoverDevices(obj)
             serials = obj.BaslerCameraSerialNumbers;
  
@@ -78,7 +82,6 @@ classdef Application < handle
             % Attempt to discover Basler Camera 1 with the defined serial
             % numbers provided
             obj.addDevice(DeviceType.BaslerCamera, serials);
-            
             
         end
         
@@ -128,6 +131,19 @@ classdef Application < handle
             % if it was  initialized properly.
             if (newDevice.Initialized)
                 obj.Devices = [obj.Devices, newDevice];
+                
+                % Add device to DeviceTable if it was successfully
+                % initialized
+                newRow = cell(1,4);
+                
+                newRow{1,1} = char(newDevice.Type);
+                newRow{1,2} = int2str(newDevice.Index);
+                newRow{1,3} = int2str(newDevice.Initialized);
+                newRow{1,4} = int2str(newDevice.Verbose);
+                oldData = get(obj.Handles.DeviceTable, 'Data');
+                newData = [oldData; newRow];
+                set(obj.Handles.DeviceTable, 'Data', newData);
+                
                 if obj.Verbose == true
                     disp('New Device:')
                     newDevice.displayDeviceInfo();

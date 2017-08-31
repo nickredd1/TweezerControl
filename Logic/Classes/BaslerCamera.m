@@ -111,10 +111,6 @@ classdef BaslerCamera < Device
                 % Open the camera
                 obj.CameraHandle.Open();
 
-                % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 
-                % 'Mono12'
-                obj.PixelFormat = 'Mono8';
-                
                 % Set ShutterMode to Rolling
                 obj.CameraHandle.Parameters.Item(...
                     'ShutterMode').SetValue('Rolling');
@@ -158,7 +154,6 @@ classdef BaslerCamera < Device
                     end
                 end
             end
-             
         end
         
         % Reset sensor parameters to defaults
@@ -168,7 +163,9 @@ classdef BaslerCamera < Device
             obj.OffsetX = 1;
             obj.OffsetY = 1;
             obj.Gain = 1;
-            obj.ExposureTime = 10^6; % 1 ms
+            obj.ExposureTime = 10^3; % 1 ms
+            % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 'Mono12'
+           obj.PixelFormat = 'Mono8';
         end
         
         % Get image from BaslerCamera object. The timestamp returned is
@@ -189,9 +186,22 @@ classdef BaslerCamera < Device
                 
                 numCols = obj.Width;
                 
-                % Convert pixel buffer data to uint8 image
-                image = vec2mat(uint8(grabResult.PixelData),...
-                    double(numCols));
+                switch obj.PixelFormat
+                    case 'Mono8'
+                        % Convert pixel buffer data to uint8 image
+                         image = vec2mat(uint8(...
+                             grabResult.PixelData), double(numCols));
+                    case 'Mono12'
+                        image = vec2mat(uint16(...
+                            grabResult.PixelData), double(numCols));
+                    case 'Mono12p'
+                        image = vec2mat(uint16(...
+                            grabResult.PixelData), double(numCols));
+                    otherwise
+                        fprintf(['Error: PixelFormat not recognized.'...
+                            ' Receieved:\n']);
+                        disp(obj.PixelFormat)
+                end
                 
                 % Get timestamp in units of ticks, where each tick is
                 % equivalent to 1 ns. Thus, we must scale this such that it
