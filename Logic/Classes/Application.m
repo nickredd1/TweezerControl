@@ -31,7 +31,9 @@ classdef Application < handle
             % available to the program currently
             obj.discoverDevices();
             
+            [success, image, timestamp] = obj.Devices(1,2).capture();
            
+            timestamp
             % Shutdown devices
             obj.shutdownDevices();
         end

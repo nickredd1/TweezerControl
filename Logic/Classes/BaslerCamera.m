@@ -101,7 +101,6 @@ classdef BaslerCamera < Device
             % Use try loop to avoid crashing program if no Basler is found
             % during initialization process
             try 
-                
                 obj.SerialNumber = serialNumbers(obj.Index + 1, :);
                 
                 % Create the CameraHandle, choosing the serial number based
@@ -129,6 +128,15 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'GainAuto').SetValue('Off');
                 
+                obj.CameraHandle.Parameters.Item(...
+                    'ChunkModeActive').SetValue(true);
+                
+                obj.CameraHandle.Parameters.Item(...
+                    'ChunkSelector').SetValue('Timestamp');
+                
+                obj.CameraHandle.Parameters.Item(...
+                    'ChunkEnable').SetValue(true);
+                
                 % Reset sensor parameters
                 obj.resetSensor();
                 
@@ -141,8 +149,13 @@ classdef BaslerCamera < Device
                 disp(getReport(ME))
                 fprintf('BaslerCamera construction failed. \n');
                 obj.Initialized = false;
-                if (obj.CameraHandle.IsOpen)
-                    obj.shutdownDevice();
+                
+                % Check if CameraHandle exists before attempting to shutdown
+                % the device 
+                if (~isempty(obj.CameraHandle))
+                    if (obj.CameraHandle.IsOpen)
+                        obj.shutdownDevice();
+                    end
                 end
             end
              
@@ -156,9 +169,12 @@ classdef BaslerCamera < Device
             obj.ExposureTime = 10000; % 1 ms
         end
         
-        % Get image from BaslerCamera object
-        function [success, image] = capture(obj)
+        % Get image from BaslerCamera object. The timestamp returned is
+        % measured in seconds relative to the time the camera was turned
+        % on.
+        function [success, image, timestamp] = capture(obj)
             if (obj.CameraHandle.IsOpen)
+                % Timeout of grabbing frames
                 timeout=int32(500); % 500
                 
                 % Initialize acquisition
@@ -166,15 +182,26 @@ classdef BaslerCamera < Device
                 grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
                 obj.CameraHandle.StreamGrabber.Stop();
-
-                % Convert pixel buffer data to uint16 image
-                image=vec2mat(uint8(grabResult.PixelData),3840);
+            
+                % Convert pixel buffer data to uint8 image
+                image = vec2mat(uint8(grabResult.PixelData),3840);
+                
+                % Get timestamp in units of ticks, where each tick is
+                % equivalent to 1 ns. Thus, we must scale this such that it
+                % is in seconds. The timestamp is measured relative to the
+                % time at which the camera turned on, so the timestamp is
+                % basically the camera on-time until the specific image was
+                % taken
+                timestamp = grabResult.ChunkData.Item(...
+                     'ChunkTimestamp').GetValue();
+                timestamp = timestamp / 10^9;
                 
                 % Return success
                 success = true;
             else
                 success = false;
                 image = [];
+                timestamp = '0.0';
                 fprintf('Warning: camera not open, no image acquired\n');
             end
         end
