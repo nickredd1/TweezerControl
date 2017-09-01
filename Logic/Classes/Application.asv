@@ -20,12 +20,15 @@ classdef Application < handle
         
         % Variable holding handles to all figures and elements of UI layer
         Handles
+        
+        LiveViewOn
     end
     
     methods
         function obj = Application(verbosity, handles)
             obj.Verbose = verbosity;
             obj.Handles = handles;
+            obj.LiveViewOn = false;
             % Initialize device array, which holds objects representing
             % devices available to the program
             obj.Devices = [];
@@ -33,50 +36,52 @@ classdef Application < handle
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
-            axes(obj.Handles.PictureAxis);
-            
-             if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
-                 for i = 1:2
-                     [success, image, timestamp] = obj.getDevice(...
-                     DeviceType.BaslerCamera, 0).capture();
-                     imshow(image)
-                     pause(.2)
-                 end
-             end
-            
-           
         end
         
+        % Begins a loop that essentially takes pictures and displays them
+        % to the PictureAxis handle of the GUI object. This loop stops when
+        % stopLiveView() is called by the Application object--in this
+        % manner, we can concurrently begin and end the live view 
+        function beginLiveView(obj)
+            if (obj.LiveViewOn == false)
+                obj.LiveViewOn = true;
+                axes(obj.Handles.PictureAxis);
+                if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
+                     while obj.LiveViewOn == true
+                         [success, image, timestamp] = obj.getDevice(...
+                         DeviceType.BaslerCamera, 0).capture();
+                         imshow(image)
+                         disp(timestamp)
+                         pause(0.07)
+                     end
+                 end
+            end
+        end
+        
+        % Stops the LiveView acquisition loop
+        function stopLiveView(obj)
+            obj.LiveViewOn = false;
+        end
         % -----------------HELPER FUNCTIONS--------------------------------
+        % Define Image ROI for a BaslerCamera object of a specific index
         function defineImageROI(obj, index)
             axes(obj.Handles.PictureAxis);
             rect = getrect;
             rect = uint32(rect);
             cam = obj.getDevice(DeviceType.BaslerCamera, index);
             if(isa(cam, 'Device'))
-                cam.OffsetX = rect(1);
-                cam.OffsetY = rect(2);
                 cam.Width = rect(3);
                 cam.Height = rect(4);
+                cam.OffsetX = rect(1);
+                cam.OffsetY = rect(2);
             end
         end
         
+        % Reset Image ROI for a BaslerCamera object of a specific index
         function resetImageROI(obj, index)
             cam = obj.getDevice(DeviceType.BaslerCamera, index);
             if(isa(cam, 'Device'))
                 cam.resetSensor();
-            end
-        end
-        function set.Verbose(obj, verbosity)
-            % If verbose == true, then various commandline outputs will be
-            % used throughout the appplication layer for debugging puposes
-            if (islogical(verbosity))
-                obj.Verbose = verbosity;
-            else 
-                fprintf(['Error: expected boolean variable.'...
-                    ' Application layer not created.\nReceived:\n'])
-                disp(verbosity)
-                return;
             end
         end
         
@@ -173,6 +178,20 @@ classdef Application < handle
                     disp('New Device:')
                     newDevice.displayDeviceInfo();
                 end
+            end
+        end
+        
+        % Setter method for Verbose variable of application object
+        function set.Verbose(obj, verbosity)
+            % If verbose == true, then various commandline outputs will be
+            % used throughout the appplication layer for debugging puposes
+            if (islogical(verbosity))
+                obj.Verbose = verbosity;
+            else 
+                fprintf(['Error: expected boolean variable.'...
+                    ' Application layer not created.\nReceived:\n'])
+                disp(verbosity)
+                return;
             end
         end
     end

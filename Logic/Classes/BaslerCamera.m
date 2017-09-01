@@ -174,9 +174,11 @@ classdef BaslerCamera < Device
             obj.OffsetY = obj.MinOffsetY + 1;
             obj.Height = obj.MaxHeight - 1;
             obj.Width = obj.MaxWidth - 1;
+            obj.OffsetX = obj.MinOffsetX + 1;
+            obj.OffsetY = obj.MinOffsetY + 1;
             
             obj.Gain = 1;
-            obj.ExposureTime = 10^3; % 1 ms (units of microseconds!)
+            obj.ExposureTime = 10^5; % 1 ms (units of microseconds!)
             % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 'Mono12'
            obj.PixelFormat = 'Mono8';
         end

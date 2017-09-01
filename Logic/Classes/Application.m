@@ -20,12 +20,15 @@ classdef Application < handle
         
         % Variable holding handles to all figures and elements of UI layer
         Handles
+        
+        LiveViewOn
     end
     
     methods
         function obj = Application(verbosity, handles)
             obj.Verbose = verbosity;
             obj.Handles = handles;
+            obj.LiveViewOn = false;
             % Initialize device array, which holds objects representing
             % devices available to the program
             obj.Devices = [];
@@ -33,17 +36,42 @@ classdef Application < handle
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
-            axes(obj.Handles.PictureAxis);
             
-             if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
-                 for i = 1:20
-                     [success, image, timestamp] = obj.getDevice(...
-                     DeviceType.BaslerCamera, 0).capture();
-                     imshow(image)
-                 end
-             end
+            
         end
         
+        % Begins a loop that essentially takes pictures and displays them
+        % to the PictureAxis handle of the GUI object. This loop stops when
+        % stopLiveView() is called by the Application object--in this
+        % manner, we can concurrently begin and end the live view 
+        function beginLiveView(obj)
+            if (obj.LiveViewOn == false)
+                obj.LiveViewOn = true;
+                axes(obj.Handles.PictureAxis);
+                if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
+                     while obj.LiveViewOn == true
+                         % Capture image, save success and timestamp
+                         [success, image, timestamp] = obj.getDevice(...
+                         DeviceType.BaslerCamera, 0).capture();
+                         imshow(image)
+                         
+                         % Pause approximately 1 period of 14 FPS so that
+                         % we don't overload the camera
+                         pause(0.07)
+                         % Set timestamp on GUI if handle is available
+                         if (isvalid(obj.Handles.TimestampText))
+                             set(obj.Handles.TimestampText,'String',...
+                             sprintf('Timestamp: %f', timestamp)); 
+                         end
+                     end
+                 end
+            end
+        end
+        
+        % Stops the LiveView acquisition loop
+        function stopLiveView(obj)
+            obj.LiveViewOn = false;
+        end
         % -----------------HELPER FUNCTIONS--------------------------------
         % Define Image ROI for a BaslerCamera object of a specific index
         function defineImageROI(obj, index)
