@@ -119,11 +119,12 @@ classdef BaslerCamera < Device
                 % exposure times
                 obj.CameraHandle.Parameters.Item(...
                     'ExposureMode').SetValue('Timed');
-                
+                 
                 % Set GainAuto to off so that we may set gain manually
                 obj.CameraHandle.Parameters.Item(...
                     'GainAuto').SetValue('Off');
                 
+                % Enable Chunks from camera, then enable timestamp chunks
                 obj.CameraHandle.Parameters.Item(...
                     'ChunkModeActive').SetValue(true);
                 
@@ -139,6 +140,10 @@ classdef BaslerCamera < Device
                 % At this point, the camera has been succesfully
                 % initialized so we may set initialized to true
                 obj.Initialized = true;
+                
+                % Initialize acquisition so that there is no latency when
+                % we need to spontaenously grab frames
+                obj.CameraHandle.StreamGrabber.Start();
                 
             catch ME
                 % Display error message
@@ -158,12 +163,12 @@ classdef BaslerCamera < Device
         
         % Reset sensor parameters to defaults
         function resetSensor(obj)
-            obj.Height = obj.MaxHeight - 1;
-            obj.Width = obj.MaxWidth - 1;
-            obj.OffsetX = 1;
-            obj.OffsetY = 1;
+            obj.Height = 300;
+            obj.Width = 300;
+            obj.OffsetX = 100;
+            obj.OffsetY = 100;
             obj.Gain = 1;
-            obj.ExposureTime = 10^3; % 1 ms
+            obj.ExposureTime = 10^3; % 1 ms (units of microseconds!)
             % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 'Mono12'
            obj.PixelFormat = 'Mono8';
         end
@@ -175,15 +180,14 @@ classdef BaslerCamera < Device
             if (obj.CameraHandle.IsOpen)
                 % Timeout of grabbing frames, always make sure it has
                 % enough time regardless of exposure time so give an extra
-                % 500 miliseconds
-                timeout=int32(obj.ExposureTime * 10^3 + 500); 
+                % 500 miliseconds. Additionally, make sure that we don't
+                % lose any precision from obj.ExposureTime being (most
+                % likely) an integer
+                timeout=int32(double(obj.ExposureTime)/10^3 + 500.0); 
                 
-                % Initialize acquisition
-                obj.CameraHandle.StreamGrabber.Start();
+                % Grab result of camera
                 grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
-                obj.CameraHandle.StreamGrabber.Stop();
-                
                 numCols = obj.Width;
                 
                 switch obj.PixelFormat
@@ -209,7 +213,7 @@ classdef BaslerCamera < Device
                 % time at which the camera turned on, so the timestamp is
                 % basically the camera on-time until the specific image was
                 % taken
-                timestamp = grabResult.Timestamp / 10^9;
+                timestamp = double(grabResult.Timestamp) / 10^9;
                 
                 % Return success
                 success = true;
@@ -229,6 +233,9 @@ classdef BaslerCamera < Device
         
         % Shutdown device (inherited from Device class)
         function shutdownDevice(obj)
+            % Stop streamgrabber so that we may shutdown
+            obj.CameraHandle.StreamGrabber.Stop();
+            
             % Release resources
             obj.CameraHandle.Dispose();
             % Delete BaslerCamera so that we can open it up again

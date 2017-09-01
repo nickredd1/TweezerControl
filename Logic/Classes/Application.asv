@@ -33,11 +33,20 @@ classdef Application < handle
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
+            axes(obj.Handles.PictureAxis);
+            
             if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
-                [success, c, timestamp] = obj.getDevice(...
+                [success, image, timestamp1] = obj.getDevice(...
+                    DeviceType.BaslerCamera, 0).capture();
+                [success, image, timestamp2] = obj.getDevice(...
+                    DeviceType.BaslerCamera, 0).capture();
+                [success, image, timestamp3] = obj.getDevice(...
+                    DeviceType.BaslerCamera, 0).capture();
+                [success, image, timestamp4] = obj.getDevice(...
                     DeviceType.BaslerCamera, 0).capture();
             end
-            
+            timestamp2 - timestamp1
+            time
             % Shutdown devices
             obj.shutdownDevices();
         end
@@ -82,7 +91,6 @@ classdef Application < handle
             % Attempt to discover Basler Camera 1 with the defined serial
             % numbers provided
             obj.addDevice(DeviceType.BaslerCamera, serials);
-            
         end
         
         % Helper function for finding the number of devices of a given type
@@ -97,7 +105,8 @@ classdef Application < handle
         end
         
         % Helper function for adding a device to the active devices of the
-        % application. 
+        % application. Includes code for displaying the device information
+        % to the DeviceTable uitable of the UI layer.
         function addDevice(obj, type, serialNumbers)
             newDevice = 0;
             % We force that the index of each new device be calculated from
@@ -133,16 +142,16 @@ classdef Application < handle
                 obj.Devices = [obj.Devices, newDevice];
                 
                 % Add device to DeviceTable if it was successfully
-                % initialized
-                newRow = cell{1,4};
+                % initialized, first making sure to format the DeviceTable
+                % entry appropriately 
+                newRow = cell(1,4);
                 
                 newRow{1,1} = char(newDevice.Type);
-                newRow{1,2} = newDevice.Index;
-                newRow{1,3} = newDevice.Initialized;
-                newRow{1,4} = newDevice.Ver
-                    , newDevice.Verbose};
+                newRow{1,2} = int2str(newDevice.Index);
+                newRow{1,3} = int2str(newDevice.Initialized);
+                newRow{1,4} = int2str(newDevice.Verbose);
                 oldData = get(obj.Handles.DeviceTable, 'Data');
-                newData = {oldData; newRow};
+                newData = [oldData; newRow];
                 set(obj.Handles.DeviceTable, 'Data', newData);
                 
                 if obj.Verbose == true

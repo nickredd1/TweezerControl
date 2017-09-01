@@ -33,9 +33,12 @@ classdef Application < handle
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
+            axes(obj.Handles.PictureAxis);
+            
             if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
-                [success, c, timestamp] = obj.getDevice(...
+                [success, image, timestamp1] = obj.getDevice(...
                     DeviceType.BaslerCamera, 0).capture();
+                imshow(image)
             end
             
             % Shutdown devices
@@ -82,7 +85,6 @@ classdef Application < handle
             % Attempt to discover Basler Camera 1 with the defined serial
             % numbers provided
             obj.addDevice(DeviceType.BaslerCamera, serials);
-            
         end
         
         % Helper function for finding the number of devices of a given type
@@ -97,7 +99,8 @@ classdef Application < handle
         end
         
         % Helper function for adding a device to the active devices of the
-        % application. 
+        % application. Includes code for displaying the device information
+        % to the DeviceTable uitable of the UI layer.
         function addDevice(obj, type, serialNumbers)
             newDevice = 0;
             % We force that the index of each new device be calculated from
@@ -133,7 +136,8 @@ classdef Application < handle
                 obj.Devices = [obj.Devices, newDevice];
                 
                 % Add device to DeviceTable if it was successfully
-                % initialized
+                % initialized, first making sure to format the DeviceTable
+                % entry appropriately 
                 newRow = cell(1,4);
                 
                 newRow{1,1} = char(newDevice.Type);

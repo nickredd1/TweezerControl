@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 31-Aug-2017 10:53:28
+% Last Modified by GUIDE v2.5 31-Aug-2017 11:53:33
 
 % Add application layer objects to our workspace so that we may communicate
 % through the application layer. Note that all classes from the various
@@ -60,14 +60,16 @@ function GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to GUI (see VARARGIN)
-
 % Choose default command line output for GUI
 handles.output = hObject;
 
 % Initialize Application Layer with verbose = true
 handles.application = Application(true, handles);
 
-% Update handles structure
+% *********VERY IMPORTANT: Updates handles structure with the updates
+% defined during this specific function block. Without calling guidata
+% below, all changes to the GUI's handles made by the Application object
+% will NOT be saved! 
 guidata(hObject, handles);
 
 end
@@ -90,4 +92,32 @@ function DeviceTable_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to DeviceTable (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+set(hObject,'Data',cell(0));
+end
+
+
+
+function NumberOfTweezersEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to NumberOfTweezersEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of NumberOfTweezersEdit as text
+%        str2double(get(hObject,'String')) returns contents of NumberOfTweezersEdit as a double
+numTweezers = uint32(str2double(get(hObject,'String')));
+handles.NumberOfTweezersText.String = ...
+    sprintf('Number of Tweezers: %d', numTweezers);
+end
+
+% --- Executes during object creation, after setting all properties.
+function NumberOfTweezersEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to NumberOfTweezersEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 end
