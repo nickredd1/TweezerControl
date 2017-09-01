@@ -21,7 +21,14 @@ classdef Application < handle
         % Variable holding handles to all figures and elements of UI layer
         Handles
         
+        % Boolean variable representing on/off status of various features
+        % of the application
         LiveViewOn
+        
+        TimestampUpdate
+        
+        BrightestPixelUpdate
+        
     end
     
     methods
@@ -29,6 +36,9 @@ classdef Application < handle
             obj.Verbose = verbosity;
             obj.Handles = handles;
             obj.LiveViewOn = false;
+            obj.TimestampUpdate = false;
+            obj.BrightestPixelUpdate = false;
+        
             % Initialize device array, which holds objects representing
             % devices available to the program
             obj.Devices = [];
@@ -37,15 +47,13 @@ classdef Application < handle
             % available to the program currently
             obj.discoverDevices();
             
-            
         end
         
         % Begins a loop that essentially takes pictures and displays them
         % to the PictureAxis handle of the GUI object. This loop stops when
-        % stopLiveView() is called by the Application object--in this
-        % manner, we can concurrently begin and end the live view 
-        function beginLiveView(obj)
-            if (obj.LiveViewOn == false)
+        % toggleLiveView() is called again
+        function startLiveView(obj)
+            if (~obj.LiveViewOn)
                 obj.LiveViewOn = true;
                 axes(obj.Handles.PictureAxis);
                 if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
@@ -54,25 +62,63 @@ classdef Application < handle
                          [success, image, timestamp] = obj.getDevice(...
                          DeviceType.BaslerCamera, 0).capture();
                          imshow(image)
-                         
                          % Pause approximately 1 period of 14 FPS so that
                          % we don't overload the camera
                          pause(0.07)
-                         % Set timestamp on GUI if handle is available
-                         if (isvalid(obj.Handles.TimestampText))
+                         
+                         % Set timestamp on GUI if handle is available and
+                         % enabled
+                         if (isvalid(obj.Handles.TimestampText) ...
+                                 && obj.TimestampUpdate)
                              set(obj.Handles.TimestampText,'String',...
                              sprintf('Timestamp: %f', timestamp)); 
+                         end
+                         
+                         % Set brightestpixel on GUI if handle is available
+                         % and it is enabled
+                         if (isvalid(obj.Handles.BrightestPixelText) ...
+                                 && obj.BrightestPixelUpdate)
+                             set(obj.Handles.BrightestPixelText,'String',...
+                             sprintf('Brightest Pixel: %f',...
+                             max(max(image)))); 
                          end
                      end
                  end
             end
         end
         
-        % Stops the LiveView acquisition loop
+        % Updates PlotAxis of GUI handles with the analyzed cartesian
+        % coordiates of the detected tweezers in our image
+        function plotTweezerUpdate(obj)
+            
+        end
+        
+        % Stop LiveView
         function stopLiveView(obj)
             obj.LiveViewOn = false;
         end
+        % Start TimestampUpdate
+        function startTimestampUpdate(obj)
+            obj.TimestampUpdate = true;
+        end
+        
+        % Stop TimestampUpdate
+        function stopTimestampUpdate(obj)
+            obj.TimestampUpdate = false;
+        end
+        
+        % Start BrightestPixelUpdate
+        function startBrightestPixelUpdate(obj)
+            obj.BrightestPixelUpdate = true;
+        end
+        
+        % Stop BrightestPixelUpdate
+        function stopBrightestPixelUpdate(obj)
+            obj.BrightestPixelUpdate = false;
+        end
+        
         % -----------------HELPER FUNCTIONS--------------------------------
+        
         % Define Image ROI for a BaslerCamera object of a specific index
         function defineImageROI(obj, index)
             axes(obj.Handles.PictureAxis);
@@ -95,6 +141,7 @@ classdef Application < handle
             end
         end
         
+        % Get Device by type and index
         function value = getDevice(obj, type, index)
             value = [];
             for i = 1:length(obj.Devices)
@@ -105,6 +152,7 @@ classdef Application < handle
             end
         end
         
+        % Shutdown all initialized devices
         function shutdownDevices(obj)
             for i = 1:length(obj.Devices)
                 obj.Devices(i).shutdownDevice();
@@ -190,7 +238,9 @@ classdef Application < handle
                 end
             end
         end
+        % ----------------- END HELPER FUNCTIONS---------------------------
         
+        % ------------------SETTER/GETTER FUNCTIONS------------------------
         % Setter method for Verbose variable of application object
         function set.Verbose(obj, verbosity)
             % If verbose == true, then various commandline outputs will be
@@ -204,6 +254,7 @@ classdef Application < handle
                 return;
             end
         end
+        % ---------------END SETTER/GETTER FUNCTIONS-----------------------
     end
 end
 

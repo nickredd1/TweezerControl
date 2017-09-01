@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 01-Sep-2017 10:21:34
+% Last Modified by GUIDE v2.5 01-Sep-2017 11:42:36
 
 % Add application layer objects to our workspace so that we may communicate
 % through the application layer. Note that all classes from the various
@@ -168,10 +168,54 @@ function LiveViewToggle_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of LiveViewToggle
-if (get(hObject,'Value') == 1)
-    handles.application.beginLiveView();
-else
-    handles.application.stopLiveView();
-end
+    if (get(hObject,'Value') == 1)
+        handles.application.startLiveView();
+    else
+        handles.application.stopLiveView();
+    end
 end
 
+% --------------------------------------------------------------------
+function TweezersSubMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to TweezersSubMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+
+% --------------------------------------------------------------------
+function CharacterizeVibrationsSubMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to CharacterizeVibrationsSubMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+
+% --- Executes on button press in TimestampUpdateRadio.
+function TimestampUpdateRadio_Callback(hObject, eventdata, handles)
+% hObject    handle to TimestampUpdateRadio (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of TimestampUpdateRadio
+    if (get(hObject,'Value') == 1)
+        handles.application.startTimestampUpdate();
+    else
+        handles.application.stopTimestampUpdate();
+    end
+end
+
+
+% --- Executes on button press in BrigthestPixelUpdateRadio.
+function BrigthestPixelUpdateRadio_Callback(hObject, eventdata, handles)
+% hObject    handle to BrigthestPixelUpdateRadio (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of BrigthestPixelUpdateRadio
+    if (get(hObject,'Value') == 1)
+        handles.application.startBrightestPixelUpdate();
+    else
+        handles.application.stopBrightestPixelUpdate();
+    end
+end
