@@ -35,23 +35,38 @@ classdef Application < handle
             obj.discoverDevices();
             axes(obj.Handles.PictureAxis);
             
-            if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
-                [success, image, timestamp1] = obj.getDevice(...
-                    DeviceType.BaslerCamera, 0).capture();
-                [success, image, timestamp2] = obj.getDevice(...
-                    DeviceType.BaslerCamera, 0).capture();
-                [success, image, timestamp3] = obj.getDevice(...
-                    DeviceType.BaslerCamera, 0).capture();
-                [success, image, timestamp4] = obj.getDevice(...
-                    DeviceType.BaslerCamera, 0).capture();
-            end
-            timestamp2 - timestamp1
-            time
-            % Shutdown devices
-            obj.shutdownDevices();
+             if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
+                 for i = 1:2
+                     [success, image, timestamp] = obj.getDevice(...
+                     DeviceType.BaslerCamera, 0).capture();
+                     imshow(image)
+                     pause(.2)
+                 end
+             end
+            
+           
         end
         
         % -----------------HELPER FUNCTIONS--------------------------------
+        function defineImageROI(obj, index)
+            axes(obj.Handles.PictureAxis);
+            rect = getrect;
+            rect = uint32(rect);
+            cam = obj.getDevice(DeviceType.BaslerCamera, index);
+            if(isa(cam, 'Device'))
+                cam.OffsetX = rect(1);
+                cam.OffsetY = rect(2);
+                cam.Width = rect(3);
+                cam.Height = rect(4);
+            end
+        end
+        
+        function resetImageROI(obj, index)
+            cam = obj.getDevice(DeviceType.BaslerCamera, index);
+            if(isa(cam, 'Device'))
+                cam.resetSensor();
+            end
+        end
         function set.Verbose(obj, verbosity)
             % If verbose == true, then various commandline outputs will be
             % used throughout the appplication layer for debugging puposes

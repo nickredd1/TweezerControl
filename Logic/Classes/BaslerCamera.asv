@@ -168,7 +168,7 @@ classdef BaslerCamera < Device
             obj.OffsetX = 100;
             obj.OffsetY = 100;
             obj.Gain = 1;
-            obj.ExposureTime = 10^3; % 1 ms (
+            obj.ExposureTime = 10^3; % 1 ms (units of microseconds!)
             % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 'Mono12'
            obj.PixelFormat = 'Mono8';
         end
@@ -180,30 +180,34 @@ classdef BaslerCamera < Device
             if (obj.CameraHandle.IsOpen)
                 % Timeout of grabbing frames, always make sure it has
                 % enough time regardless of exposure time so give an extra
-                % 50 miliseconds
-                timeout=int32(double(obj.ExposureTime) / 10^3 + 500); 
+                % 500 miliseconds. Additionally, make sure that we don't
+                % lose any precision from obj.ExposureTime being (most
+                % likely) an integer
+                timeout=int32(double(obj.ExposureTime)/10^3 + 500.0); 
                 
                 % Grab result of camera
                 grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
-                numCols = obj.Width;
+                if (grabResult.GrabSucceeded)
+                    numCols = obj.Width;
                 
-                switch obj.PixelFormat
-                    case 'Mono8'
-                        % Convert pixel buffer data to uint8 image
-                         image = vec2mat(uint8(...
-                             grabResult.PixelData), double(numCols));
-                    case 'Mono12'
-                        image = vec2mat(uint16(...
-                            grabResult.PixelData), double(numCols));
-                    case 'Mono12p'
-                        image = vec2mat(uint16(...
-                            grabResult.PixelData), double(numCols));
-                    otherwise
-                        fprintf(['Error: PixelFormat not recognized.'...
-                            ' Receieved:\n']);
-                        disp(obj.PixelFormat)
-                end
+                    switch obj.PixelFormat
+                        case 'Mono8'
+                            % Convert pixel buffer data to uint8 image
+                             image = vec2mat(uint8(...
+                                 grabResult.PixelData), double(numCols));
+                        case 'Mono12'
+                            image = vec2mat(uint16(...
+                                grabResult.PixelData), double(numCols));
+                        case 'Mono12p'
+                            image = vec2mat(uint16(...
+                                grabResult.PixelData), double(numCols));
+                        otherwise
+                            fprintf(['Error: PixelFormat not recognized.'...
+                                ' Receieved:\n']);
+                            disp(obj.PixelFormat)
+                    end
+                
                 
                 % Get timestamp in units of ticks, where each tick is
                 % equivalent to 1 ns. Thus, we must scale this such that it

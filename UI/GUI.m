@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 31-Aug-2017 11:53:33
+% Last Modified by GUIDE v2.5 31-Aug-2017 18:21:29
 
 % Add application layer objects to our workspace so that we may communicate
 % through the application layer. Note that all classes from the various
@@ -120,4 +120,32 @@ function NumberOfTweezersEdit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
+
+
+% --- Executes on button press in DefineROIButton.
+function DefineROIButton_Callback(hObject, eventdata, handles)
+% hObject    handle to DefineROIButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.application.defineImageROI(0);
+end
+
+% --- Executes on button press in ResetROIButton.
+function ResetROIButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ResetROIButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.application.resetImageROI(0);
+end
+
+
+% --- Executes during object deletion, before destroying properties.
+function figure1_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Shutdown devices via application layer
+handles.application.shutdownDevices();
 end

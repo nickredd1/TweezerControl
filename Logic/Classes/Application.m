@@ -35,27 +35,35 @@ classdef Application < handle
             obj.discoverDevices();
             axes(obj.Handles.PictureAxis);
             
-            if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
-                [success, image, timestamp1] = obj.getDevice(...
-                    DeviceType.BaslerCamera, 0).capture();
-                imshow(image)
-            end
-            
-            % Shutdown devices
-            obj.shutdownDevices();
+             if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
+                 for i = 1:20
+                     [success, image, timestamp] = obj.getDevice(...
+                     DeviceType.BaslerCamera, 0).capture();
+                     imshow(image)
+                 end
+             end
         end
         
         % -----------------HELPER FUNCTIONS--------------------------------
-        function set.Verbose(obj, verbosity)
-            % If verbose == true, then various commandline outputs will be
-            % used throughout the appplication layer for debugging puposes
-            if (islogical(verbosity))
-                obj.Verbose = verbosity;
-            else 
-                fprintf(['Error: expected boolean variable.'...
-                    ' Application layer not created.\nReceived:\n'])
-                disp(verbosity)
-                return;
+        % Define Image ROI for a BaslerCamera object of a specific index
+        function defineImageROI(obj, index)
+            axes(obj.Handles.PictureAxis);
+            rect = getrect;
+            rect = uint32(rect);
+            cam = obj.getDevice(DeviceType.BaslerCamera, index);
+            if(isa(cam, 'Device'))
+                cam.Width = rect(3);
+                cam.Height = rect(4);
+                cam.OffsetX = rect(1);
+                cam.OffsetY = rect(2);
+            end
+        end
+        
+        % Reset Image ROI for a BaslerCamera object of a specific index
+        function resetImageROI(obj, index)
+            cam = obj.getDevice(DeviceType.BaslerCamera, index);
+            if(isa(cam, 'Device'))
+                cam.resetSensor();
             end
         end
         
@@ -152,6 +160,20 @@ classdef Application < handle
                     disp('New Device:')
                     newDevice.displayDeviceInfo();
                 end
+            end
+        end
+        
+        % Setter method for Verbose variable of application object
+        function set.Verbose(obj, verbosity)
+            % If verbose == true, then various commandline outputs will be
+            % used throughout the appplication layer for debugging puposes
+            if (islogical(verbosity))
+                obj.Verbose = verbosity;
+            else 
+                fprintf(['Error: expected boolean variable.'...
+                    ' Application layer not created.\nReceived:\n'])
+                disp(verbosity)
+                return;
             end
         end
     end

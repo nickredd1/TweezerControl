@@ -120,6 +120,11 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'ExposureMode').SetValue('Timed');
                  
+                % Set trigger mode to software for higher framerates while
+                % grabbing images
+                obj.CameraHandle.Parameters.Item(...
+                    'TriggerSource').SetValue('Software');
+                
                 % Set GainAuto to off so that we may set gain manually
                 obj.CameraHandle.Parameters.Item(...
                     'GainAuto').SetValue('Off');
@@ -163,10 +168,13 @@ classdef BaslerCamera < Device
         
         % Reset sensor parameters to defaults
         function resetSensor(obj)
-            obj.Height = 300;
-            obj.Width = 300;
-            obj.OffsetX = 100;
-            obj.OffsetY = 100;
+            % Define offsets first because they directly affect the Height
+            % and Width definable for the camera
+            obj.OffsetX = obj.MinOffsetX + 1;
+            obj.OffsetY = obj.MinOffsetY + 1;
+            obj.Height = obj.MaxHeight - 1;
+            obj.Width = obj.MaxWidth - 1;
+            
             obj.Gain = 1;
             obj.ExposureTime = 10^3; % 1 ms (units of microseconds!)
             % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 'Mono12'
@@ -183,48 +191,62 @@ classdef BaslerCamera < Device
                 % 500 miliseconds. Additionally, make sure that we don't
                 % lose any precision from obj.ExposureTime being (most
                 % likely) an integer
-                timeout=int32(double(obj.ExposureTime)/10^3 + 500.0); 
+                timeout=int32(double(obj.ExposureTime)/10^3 + 5000.0); 
+                
+                obj.CameraHandle.ExecuteSoftwareTrigger();
                 
                 % Grab result of camera
                 grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
-                numCols = obj.Width;
+                % Make sure grab succeeded
+                if (grabResult.GrabSucceeded)
+                    numCols = obj.Width;
                 
-                switch obj.PixelFormat
-                    case 'Mono8'
-                        % Convert pixel buffer data to uint8 image
-                         image = vec2mat(uint8(...
-                             grabResult.PixelData), double(numCols));
-                    case 'Mono12'
-                        image = vec2mat(uint16(...
-                            grabResult.PixelData), double(numCols));
-                    case 'Mono12p'
-                        image = vec2mat(uint16(...
-                            grabResult.PixelData), double(numCols));
-                    otherwise
-                        fprintf(['Error: PixelFormat not recognized.'...
-                            ' Receieved:\n']);
-                        disp(obj.PixelFormat)
+                    switch obj.PixelFormat
+                        case 'Mono8'
+                            % Convert pixel buffer data to uint8 image
+                             image = vec2mat(uint8(...
+                                 grabResult.PixelData), double(numCols));
+                        case 'Mono12'
+                            image = vec2mat(uint16(...
+                                grabResult.PixelData), double(numCols));
+                        case 'Mono12p'
+                            image = vec2mat(uint16(...
+                                grabResult.PixelData), double(numCols));
+                        otherwise
+                            fprintf(['Error: PixelFormat not recognized.'...
+                                ' Receieved:\n']);
+                            disp(obj.PixelFormat)
+                    end
+                    
+                    % Get timestamp in units of ticks, where each tick is
+                    % equivalent to 1 ns. Thus, we must scale this such that it
+                    % is in seconds. The timestamp is measured relative to the
+                    % time at which the camera turned on, so the timestamp is
+                    % basically the camera on-time until the specific image was
+                    % taken
+                    timestamp = double(grabResult.Timestamp) / 10^9;
+
+                    % Return success
+                    success = true;
+                    
+                    % Dispose result when completed so that the buffer is
+                    % emptied
+                    grabResult.Dispose();
+                else
+                    success = false;
+                    image = [];
+                    timestamp = 0;
+                    fprintf('Error: Grab failed \n');
                 end
-                
-                % Get timestamp in units of ticks, where each tick is
-                % equivalent to 1 ns. Thus, we must scale this such that it
-                % is in seconds. The timestamp is measured relative to the
-                % time at which the camera turned on, so the timestamp is
-                % basically the camera on-time until the specific image was
-                % taken
-                timestamp = double(grabResult.Timestamp) / 10^9;
-                
-                % Return success
-                success = true;
             else
                 success = false;
                 image = [];
                 timestamp = 0;
-                fprintf('Warning: camera not open, no image acquired\n');
+                fprintf('Error: camera not open, no image acquired\n');
             end
         end
-        
+       
         % Display device info (inherited from Device class)
         function displayDeviceInfo(obj)
             % Extend inherited displayDeviceInfo() function
@@ -256,6 +278,13 @@ classdef BaslerCamera < Device
         % MAKE SURE THAT YOU PASS A SIGNED 64-BIT INTEGER TO SetValue() OR
         % ELSE IT WILL THROW AN ERROR
         function set.Height(obj, height)
+            % Check if stream grabber is grabbing because if it is, we
+            % cannot change sensor parameters
+            wasGrabbing = obj.CameraHandle.StreamGrabber.IsGrabbing;
+            if (wasGrabbing)
+               obj.CameraHandle.StreamGrabber.Stop();
+            end
+            
             min = obj.MinHeight;
             max = obj.MaxHeight;
             if (isnumeric(height) && ((height > min) && (height < max)))
@@ -266,11 +295,23 @@ classdef BaslerCamera < Device
                     '%d and > %d. Received:\n'], max, min);
                 disp(height)
             end
+            
+            % If it was grabbing, restart
+            if (wasGrabbing)
+                obj.CameraHandle.StreamGrabber.Start();
+            end
         end
         
         % Setter method for setting obj.Width. Includes error checking
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.Width(obj, width)
+            % Check if stream grabber is grabbing because if it is, we
+            % cannot change sensor parameters
+            wasGrabbing = obj.CameraHandle.StreamGrabber.IsGrabbing;
+            if (wasGrabbing)
+               obj.CameraHandle.StreamGrabber.Stop();
+            end
+            
             min = obj.MinWidth;
             max = obj.MaxWidth;
             if (isnumeric(width) && ((width > min) && (width < max)))
@@ -281,11 +322,23 @@ classdef BaslerCamera < Device
                     '%d and > %d. Received:\n'], max, min);
                 disp(width)
             end
+            
+            % If it was grabbing, restart
+            if (wasGrabbing)
+                obj.CameraHandle.StreamGrabber.Start();
+            end
         end
         
         % Setter method for setting obj.OffsetX. Includes error checking
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.OffsetX(obj, offsetx)
+            % Check if stream grabber is grabbing because if it is, we
+            % cannot change sensor parameters
+            wasGrabbing = obj.CameraHandle.StreamGrabber.IsGrabbing;
+            if (wasGrabbing)
+               obj.CameraHandle.StreamGrabber.Stop();
+            end
+            
             min = obj.MinOffsetX;
             max = obj.MaxOffsetX;
             if (isnumeric(offsetx) && ((offsetx > min) && (offsetx < max)))
@@ -296,11 +349,23 @@ classdef BaslerCamera < Device
                     '%d and > %d. Received:\n'], max, min);
                 disp(offsetx)
             end
+            
+            % If it was grabbing, restart
+            if (wasGrabbing)
+                obj.CameraHandle.StreamGrabber.Start();
+            end
         end
         
         % Setter method for setting obj.OffsetY. Includes error checking
         % based on the actual Basler Ace Camera model (acA3800-14um)
         function set.OffsetY(obj, offsety)
+            % Check if stream grabber is grabbing because if it is, we
+            % cannot change sensor parameters
+            wasGrabbing = obj.CameraHandle.StreamGrabber.IsGrabbing;
+            if (wasGrabbing)
+               obj.CameraHandle.StreamGrabber.Stop();
+            end
+            
             min = obj.MinOffsetY;
             max = obj.MaxOffsetY;
             if (isnumeric(offsety) && ((offsety > min) && (offsety < max)))
@@ -311,12 +376,24 @@ classdef BaslerCamera < Device
                     '%d and > %d. Received:\n'], max, min);
                 disp(offsety)
             end
+            
+            % If it was grabbing, restart
+            if (wasGrabbing)
+                obj.CameraHandle.StreamGrabber.Start();
+            end
         end
         
         % Setter method for setting obj.ExposureTime. Includes error 
         % checking based on the actual Basler Ace Camera model 
         % (acA3800-14um)
         function set.ExposureTime(obj, exptime)
+            % Check if stream grabber is grabbing because if it is, we
+            % cannot change sensor parameters
+            wasGrabbing = obj.CameraHandle.StreamGrabber.IsGrabbing;
+            if (wasGrabbing)
+               obj.CameraHandle.StreamGrabber.Stop();
+            end
+            
             min = obj.MinExposureTime;
             max = obj.MaxExposureTime;
             if (isnumeric(exptime) && ((exptime > min) && (exptime < max)))
@@ -327,12 +404,24 @@ classdef BaslerCamera < Device
                     '%d and > %d. Received:\n'], max, min);
                 disp(exptime)
             end
+            
+            % If it was grabbing, restart
+            if (wasGrabbing)
+                obj.CameraHandle.StreamGrabber.Start();
+            end
         end
         
         % Setter method for setting obj.Gain. Includes error 
         % checking based on the actual Basler Ace Camera model 
         % (acA3800-14um)
         function set.Gain(obj, gain)
+            % Check if stream grabber is grabbing because if it is, we
+            % cannot change sensor parameters
+            wasGrabbing = obj.CameraHandle.StreamGrabber.IsGrabbing;
+            if (wasGrabbing)
+               obj.CameraHandle.StreamGrabber.Stop();
+            end
+            
             min = obj.MinGain;
             max = obj.MaxGain;
             if (isnumeric(gain) && ((gain > min) && (gain < max)))
@@ -343,12 +432,24 @@ classdef BaslerCamera < Device
                     '%d and > %d. Received:\n'], max, min);
                 disp(gain)
             end
+            
+            % If it was grabbing, restart
+            if (wasGrabbing)
+                obj.CameraHandle.StreamGrabber.Start();
+            end
         end
         
         % Setter method for setting obj.PixelFormat. Includes error 
         % checking based on the actual Basler Ace Camera model 
         % (acA3800-14um)
         function set.PixelFormat(obj, format)
+            % Check if stream grabber is grabbing because if it is, we
+            % cannot change sensor parameters
+            wasGrabbing = obj.CameraHandle.StreamGrabber.IsGrabbing;
+            if (wasGrabbing)
+               obj.CameraHandle.StreamGrabber.Stop();
+            end
+            
             switch format
                 case 'Mono8'
                     obj.CameraHandle.Parameters.Item(...
@@ -363,6 +464,11 @@ classdef BaslerCamera < Device
                     fprintf(['Error: PixelFormat not recognized. '
                         'Received:\n']);
                     disp(format)
+            end
+            
+            % If it was grabbing, restart
+            if (wasGrabbing)
+                obj.CameraHandle.StreamGrabber.Start();
             end
         end
         
