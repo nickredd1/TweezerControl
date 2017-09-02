@@ -194,9 +194,6 @@ classdef BaslerCamera < Device
                 % lose any precision from obj.ExposureTime being (most
                 % likely) an integer
                 timeout=int32(double(obj.ExposureTime)/10^3 + 5000.0); 
-                
-                obj.CameraHandle.ExecuteSoftwareTrigger();
-                
                 % Grab result of camera
                 grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);

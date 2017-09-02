@@ -47,13 +47,12 @@ classdef Application < handle
         function beginLiveView(obj)
             if (obj.LiveViewOn == false)
                 obj.LiveViewOn = true;
-                axes(obj.Handles.PictureAxis);
                 if (isa(obj.getDevice(DeviceType.BaslerCamera, 0), 'Device'))
                      while obj.LiveViewOn == true
                          % Capture image, save success and timestamp
                          [success, image, timestamp] = obj.getDevice(...
                          DeviceType.BaslerCamera, 0).capture();
-                         imshow(image)
+                         imshow(image, 'Parent', obj.Handles.PictureAxis)
                          
                          % Pause approximately 1 period of 14 FPS so that
                          % we don't overload the camera
@@ -63,9 +62,50 @@ classdef Application < handle
                              set(obj.Handles.TimestampText,'String',...
                              sprintf('Timestamp: %f', timestamp)); 
                          end
+                         
+                         % Set timestamp on GUI if handle is available
+                         if (isvalid(obj.Handles.BrightestPixelText))
+                             set(obj.Handles.BrightestPixelText,'String',...
+                             sprintf('Brightest Pixel: %d', max(max(image)))); 
+                         end
+                         
+                         %obj.plotTweezerLocation(image);
                      end
                  end
             end
+        end
+        
+        function plotTweezerLocation(obj, image)
+            width = obj.getDevice(DeviceType.BaslerCamera, 0).Width;
+            height = obj.getDevice(DeviceType.BaslerCamera, 0).Height;
+            offsetx = obj.getDevice(DeviceType.BaslerCamera, 0).OffsetX;
+            offsety = obj.getDevice(DeviceType.BaslerCamera, 0).OffsetY;
+            %Binarize
+            I = imbinarize(image, 0.1);
+            
+            %remove noise
+            minNumPixels=40;
+            I = imclose(I,strel('disk',8)); %close gaps
+            I = bwareaopen(I,minNumPixels); %suppress objects with <minNumPixels
+            I = imclose(I,strel('disk',30)); %close gaps
+            I = imfill(I,'holes'); %fill holes
+            
+            %find boundaries
+            [B,L]=bwboundaries(I,'noholes');
+            
+            %find centroid
+            L = bwlabel(I);
+            stat = regionprops(L,'centroid','area');
+            if (size(stat,1) ~= 0)
+                x = [];
+                y = [];
+                for (i = 1:size(stat,1))
+                    x = [x, round(stat(1).Centroid(1))];
+                    y = [y, round(stat(1).Centroid(2))];
+                end
+                plot(x, y,'*', 'Parent', obj.Handles.PlotAxis)
+            end
+            
         end
         
         % Stops the LiveView acquisition loop

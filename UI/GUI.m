@@ -70,8 +70,6 @@ handles.application = Application(true, handles);
 axes(handles.PictureAxis);
 imshow(zeros(1000))
 
-axes(handles.PlotAxis)
-imshow(zeros(1000))
 % *********VERY IMPORTANT: Updates handles structure with the updates
 % defined during this specific function block. Without calling guidata
 % below, all changes to the GUI's handles made by the Application object
