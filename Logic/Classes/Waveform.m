@@ -63,7 +63,7 @@ classdef Waveform
         end
         
         % Helper function for setting frequencies of Waveform object
-        function set.Freqs(obj, freqs)
+        function obj = set.Freqs(obj, freqs)
             if (isnumeric(freqs))
                 % Make sure we have double array
                 obj.Freqs = double(freqs);
@@ -77,7 +77,7 @@ classdef Waveform
         end
         
          % Helper function for setting amplitude of Waveform object
-        function set.Amps(obj, amps)
+        function obj = set.Amps(obj, amps)
             if (isnumeric(amps))
                 % Make sure we have double array
                 obj.Amps = double(amps);
@@ -91,7 +91,7 @@ classdef Waveform
         end
         
          % Helper function for setting phases of Waveform object
-        function set.Phases(obj, phases)
+        function obj = set.Phases(obj, phases)
             if (isnumeric(phases))
                 % Make sure we have double array
                 obj.Phases = double(phases);

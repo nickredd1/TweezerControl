@@ -21,6 +21,7 @@ classdef Application < handle
         % Variable holding handles to all figures and elements of UI layer
         Handles
         
+        % Boolean variable for 
         LiveViewOn
     end
     
