@@ -36,8 +36,6 @@ classdef Application < handle
             % Use helper function to query and gather devices that are
             % available to the program currently
             obj.discoverDevices();
-            
-            
         end
         
         % Begins a loop that essentially takes pictures and displays them

@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 01-Sep-2017 10:21:34
+% Last Modified by GUIDE v2.5 05-Sep-2017 10:21:20
 
 % Add application layer objects to our workspace so that we may communicate
 % through the application layer. Note that all classes from the various
@@ -66,10 +66,6 @@ handles.output = hObject;
 % Initialize Application Layer with verbose = true
 handles.application = Application(true, handles);
 
-% Black out axes in GUI so that we don't see the default Plot axes
-axes(handles.PictureAxis);
-imshow(zeros(1000))
-
 % *********VERY IMPORTANT: Updates handles structure with the updates
 % defined during this specific function block. Without calling guidata
 % below, all changes to the GUI's handles made by the Application object
@@ -101,52 +97,9 @@ end
 
 
 
-function NumberOfTweezersEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to NumberOfTweezersEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of NumberOfTweezersEdit as text
-%        str2double(get(hObject,'String')) returns contents of NumberOfTweezersEdit as a double
-numTweezers = uint32(str2double(get(hObject,'String')));
-handles.NumberOfTweezersText.String = ...
-    sprintf('Number of Tweezers: %d', numTweezers);
-end
-
-% --- Executes during object creation, after setting all properties.
-function NumberOfTweezersEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to NumberOfTweezersEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-end
-
-
-% --- Executes on button press in DefineROIButton.
-function DefineROIButton_Callback(hObject, eventdata, handles)
-% hObject    handle to DefineROIButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-handles.application.defineImageROI(0);
-end
-
-% --- Executes on button press in ResetROIButton.
-function ResetROIButton_Callback(hObject, eventdata, handles)
-% hObject    handle to ResetROIButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-handles.application.resetImageROI(0);
-end
-
-
 % --- Executes during object deletion, before destroying properties.
-function figure1_DeleteFcn(hObject, eventdata, handles)
-% hObject    handle to figure1 (see GCBO)
+function MainGUI_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to MainGUI (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -159,17 +112,24 @@ end
 
 
 
-% --- Executes on button press in LiveViewToggle.
-function LiveViewToggle_Callback(hObject, eventdata, handles)
-% hObject    handle to LiveViewToggle (see GCBO)
+
+% --------------------------------------------------------------------
+function ModulesMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to ModulesMenu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of LiveViewToggle
-if (get(hObject,'Value') == 1)
-    handles.application.beginLiveView();
-else
-    handles.application.stopLiveView();
-end
 end
 
+% --------------------------------------------------------------------
+function CalibrationSubMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to CalibrationSubMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+% --------------------------------------------------------------------
+function CharacterizeLongitudinalSubMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to CharacterizeLongitudinalSubMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
