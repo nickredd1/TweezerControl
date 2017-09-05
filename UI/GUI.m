@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 05-Sep-2017 14:31:49
+% Last Modified by GUIDE v2.5 05-Sep-2017 15:03:57
 
 % Add application layer objects to our workspace so that we may communicate
 % through the application layer. Note that all classes from the various
@@ -98,8 +98,8 @@ end
 
 
 % --- Executes during object deletion, before destroying properties.
-function MainGUI_DeleteFcn(hObject, eventdata, handles)
-% hObject    handle to MainGUI (see GCBO)
+function GUI_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to GUI (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -155,4 +155,10 @@ function CharacterizeElectronicsSubMenu_Callback(hObject, eventdata, handles)
 % hObject    handle to CharacterizeElectronicsSubMenu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% Save new GUI's handle
+handles.CharacterizeElectronicsGUI = CharacterizeElectronicsGUI;
+
+% Save data
+guidata(hObject, handles);
 end
