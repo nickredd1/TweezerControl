@@ -123,11 +123,12 @@ classdef Application < handle
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
             
-            [pxx,f] = periodogram(discreteWFM.Signal * awg.ChAmps(1) / 1000,...
-                [], NFFT, Fs, 'power');
+            [pxx,f] = periodogram(discreteWFM.Signal * awg.ChAmps(1),...
+                hamming(NFFT), NFFT, Fs, 'centered', 'power');
+           
             
-            plot(f, 10*log10(pxx))
-            axis([80*10^6, 90*10^6, -100, 20])
+            plot(f, pxx)
+            axis([80*10^6, 90*10^6, 0, 100])
             
             pause(1)
             axes(periodHandle)

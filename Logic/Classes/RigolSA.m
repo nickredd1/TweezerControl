@@ -23,6 +23,9 @@ classdef RigolSA < Device
         
         % End frequency
         EndFreq
+        
+        % Number of samples taken during each power spectrum from Rigol SA
+        NumSamples = 601;
     end
     
     methods
@@ -42,7 +45,7 @@ classdef RigolSA < Device
             disp(char(idn)')
 
             % Resolution bandwidth (default is 1 MHz)
-            obj.RBW = 3000; 
+            obj.RBW = 3000.0; 
             fprintf(obj.VISAUSB,[':sens:band:res ',num2str(obj.RBW)]);
 
             % Setting frequency range with [start,end]
@@ -50,12 +53,12 @@ classdef RigolSA < Device
             obj.Units = 'MHz';
             obj.StartFreq = 50;
             obj.EndFreq = 120;
-            fprintf(DSA815,[':sens:freq:star ', ...
+            fprintf(obj.VISAUSB, [':sens:freq:star ', ...
                 num2str(obj.StartFreq),obj.Units]);
-            fprintf(DSA815,[':sens:freq:stop ', ...
+            fprintf(obj.VISAUSB, [':sens:freq:stop ', ...
                 num2str(obj.EndFreq),obj.Units]);
 
-            
+            obj.Initialized = true;
             % %% Setting the unit for amplitude
             % specParameters.ampunit='dBm'; %default is dBm for log unit
             % % can also change to lin unit, e.g. V, W, or other log units DBMV, DBUV
@@ -97,7 +100,14 @@ classdef RigolSA < Device
         end
         
         % Gets power spectrum from Spectrum Analyzer
-        function spectrum = getPowerSpectrum(obj, attenuation)
+        function spectrum = getPowerSpectrum(obj, start, last)
+            obj.StartFreq = start;
+            obj.EndFreq = last;
+            fprintf(obj.VISAUSB, [':sens:freq:star ', ...
+                num2str(obj.StartFreq), obj.Units]);
+            fprintf(obj.VISAUSB, [':sens:freq:stop ', ...
+                num2str(obj.EndFreq), obj.Units]);
+            
             % Read data (in ASCII)
             fprintf(obj.VISAUSB, ':trac:data? trace1' );
             [data, len, msg] = fread(obj.VISAUSB, obj.BufferSize); 
@@ -112,13 +122,20 @@ classdef RigolSA < Device
             tempdata = [strtrim(temp1(2)), temp2];
             s = size(tempdata);
 
-            specParameters.data = zeros(1,s(2));
+            data = zeros(2, s(2));
 
             for i = 1:s(2)
-               num = str2num(char(tempdata(i)));
-               data(i) = num;
+               num = str2double(char(tempdata(i)));
+               data(1, i) = num;
             end
-
+            
+            switch obj.Units
+                case 'MHz'
+                    startFreq = obj.StartFreq * 10^6;
+                    endFreq = obj.EndFreq * 10^6;
+                    data(2, :) = linspace(startFreq, endFreq, ...
+                        obj.NumSamples);
+            end
             spectrum = data;
         end
         

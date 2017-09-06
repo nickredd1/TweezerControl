@@ -22,7 +22,7 @@ function varargout = CharacterizeElectronicsGUI(varargin)
 
 % Edit the above text to modify the response to help CharacterizeElectronicsGUI
 
-% Last Modified by GUIDE v2.5 05-Sep-2017 14:47:58
+% Last Modified by GUIDE v2.5 06-Sep-2017 16:15:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -91,7 +91,7 @@ function SetNumberOfTweezersEditText_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of SetNumberOfTweezersEditText as a double
 numTweezers = uint32(str2double(get(hObject,'String')));
 
-handles.application.outputNumTweezers(numTweezers);
+handles.application.outputNumTweezers(handles, numTweezers);
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -105,4 +105,13 @@ function SetNumberOfTweezersEditText_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
+
+
+% --- Executes on button press in PlotChannelAmplitudeButton.
+function PlotChannelAmplitudeButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PlotChannelAmplitudeButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.application.plotChannelAmplitude(handles);
 end
