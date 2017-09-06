@@ -58,15 +58,14 @@ classdef Waveform
             
             % Scale waveform such that each frequency component contributes
             % equally to the aplitude of the composite waveform
-            if (size(signals, 1) > 1)
-                signals = sum(signals)/obj.NumFreqs;
-            end
+            signals = sum(signals)/obj.NumFreqs;
+            
             obj.Signal = signals;
         end
         
         % Helper function for setting frequencies of Waveform object
         function obj = set.Freqs(obj, freqs)
-            if (isnumeric(freqs) && ~isempty(freqs))
+            if (isnumeric(freqs) && length(freqs) )
                 % Make sure we have double array
                 obj.Freqs = double(freqs);
             else 
@@ -80,7 +79,7 @@ classdef Waveform
         
          % Helper function for setting amplitude of Waveform object
         function obj = set.Amps(obj, amps)
-            if (isnumeric(amps) && ~isempty(amps))
+            if (isnumeric(amps))
                 % Make sure we have double array
                 obj.Amps = double(amps);
             else 
@@ -94,7 +93,7 @@ classdef Waveform
         
          % Helper function for setting phases of Waveform object
         function obj = set.Phases(obj, phases)
-            if (isnumeric(phases) && ~isempty(phases))
+            if (isnumeric(phases))
                 % Make sure we have double array
                 obj.Phases = double(phases);
             else 

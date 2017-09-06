@@ -159,7 +159,7 @@ classdef SpectrumAWG < Device
             end
             
             % Output temp waveform (Step 3)
-            tempSignal = zeros(1,obj.NumMemSamples);
+            tempSignal = .5*ones(1,obj.NumMemSamples);
             errorCode = spcm_dwSetData (obj.CardHandle.hDrv, 0,...
                 obj.NumMemSamples, 1, 0, tempSignal);
             
@@ -179,6 +179,7 @@ classdef SpectrumAWG < Device
             
             % Check errorCode for anything fishy
             obj.checkError(errorCode);
+            
         end
         
         % Display device info (inherited from Device class)
@@ -222,9 +223,9 @@ classdef SpectrumAWG < Device
         
         % Updates the SpectrumAWG object with a Waveform object wfm, which
         % contains a pre-computed discretized signal.
-        function update(obj, wfm)
+        function output(obj, wfm)
             % Make sure we are receiving a Waveform object
-            if ~(isa(wfm,Waveform))
+            if ~(isa(wfm, 'Waveform'))
                 fprintf('Error: expected a Waveform object. Received:\n');
                 disp(wfm)
             end
@@ -233,16 +234,17 @@ classdef SpectrumAWG < Device
             [errorCode, currentStep] = spcm_dwGetParam_i32(...
                 obj.CardHandle.hDrv, ...
                 349950);  % 349950 = SPC_SEQMODE_STATS
-            nextStep=bitxor(currentStep,1);
+            
+            nextStep=bitxor(currentStep, 1);
             % Check errorCode for anything fishy
             obj.checkError(errorCode);
             
             % Update segment
-            errorCode = spcm_dwSetParam_i32 (obj.CardHandl.hDrv,...
+            errorCode = spcm_dwSetParam_i32 (obj.CardHandle.hDrv,...
                 obj.RegMap('SPC_SEQMODE_WRITESEGMENT'), nextStep);
             obj.checkError(errorCode);
             
-            errorCode = spcm_dwSetParam_i32 (obj.CardHandl.hDrv,...
+            errorCode = spcm_dwSetParam_i32 (obj.CardHandle.hDrv,... 
                 obj.RegMap('SPC_SEQMODE_SEGMENTSIZE'), obj.NumMemSamples);
             obj.checkError(errorCode);
             
@@ -250,6 +252,17 @@ classdef SpectrumAWG < Device
             errorCode = spcm_dwSetData (obj.CardHandle.hDrv, 0,...
                 obj.NumMemSamples, 1, 0, wfm.Signal);
             obj.checkError(errorCode);
+            
+            % modify sequence steps memory
+            if currentStep == 0 %jump to 1
+                spcMSetupSequenceStep (obj.CardHandle, 1, 1, 1, 1, 0);
+                spcMSetupSequenceStep (obj.CardHandle, 0, 1, 0, 1, 0); 
+            else % jump to 0
+                spcMSetupSequenceStep (obj.CardHandle, 0, 0, 0, 1, 0); 
+                spcMSetupSequenceStep (obj.CardHandle, 1, 0, 1, 1, 0);
+            end
+            
+            disp('Outputting Waveform')
         end
         
     end

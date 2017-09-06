@@ -39,6 +39,38 @@ classdef Application < handle
             obj.discoverDevices();
         end
         
+        function outputNumTweezers(obj, numTweezers)
+            
+            periodHandle = findobj('Tag', 'PeriodAxes');
+            if (mod(numTweezers,2) == 0)
+                numTweezers = numTweezers + 1;
+            end
+            center = double(85 * 10^6);
+            spacing = double(500 * 10^3);
+            awg = obj.getDevice(DeviceType.SpectrumAWG, 0);
+            memSamples = awg.NumMemSamples;
+            
+            samplingRate = double(awg.SamplingRate);
+            if (numTweezers == 1)
+                freqs = [center];
+            else
+                numTweezers = double(numTweezers);
+                freqs = center + spacing * ...
+                double(linspace(-(numTweezers-1)/2,(numTweezers-1)/2,numTweezers));
+            end
+            
+            amps = 1500.0 * double(ones(1,length(freqs)));
+            phases = double(zeros(1,length(freqs)));
+            t = double((1:memSamples)/samplingRate);
+            
+            
+            discreteWFM = Waveform(freqs, amps, phases, t);
+            cla(periodHandle)
+            axes(periodHandle)
+            plot(t, discreteWFM.Signal);
+            awg.output(discreteWFM);
+        end
+        
         % Begins a loop that essentially takes pictures and displays them
         % to the PictureAxis handle of the GUI object. This loop stops when
         % stopLiveView() is called by the Application object--in this
