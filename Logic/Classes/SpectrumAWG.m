@@ -265,6 +265,16 @@ classdef SpectrumAWG < Device
             disp('Outputting Waveform')
         end
         
+        function changeAmplitudes(obj, chAmps)
+            amplitude = 80; %[80, 480]mVp (low power path), [420, 2000] (high power path)
+            channel = 0; % 'SPC_AMP0'
+            error = 0;
+            if cardInfo.AO.gainProgrammable == true
+                error = error + spcm_dwSetParam_i32 (cardInfo.hDrv, 30010 + channel * 100, amplitude);  % 30010 = SPC_AMP0 
+            end
+
+            [success, cardInfo] = spcMCheckSetError (error, cardInfo);
+        end
     end
     
 end
