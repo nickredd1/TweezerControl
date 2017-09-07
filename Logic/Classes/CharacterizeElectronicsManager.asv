@@ -18,17 +18,17 @@ classdef CharacterizeElectronicsManager < GUIManager
     
     methods
         function obj = CharacterizeElectronicsManager(application)
-            obj = obj@GUIManager(application, gui, handles);
-            newGUI = CharacterizeElectronicsGUI;
+            obj = obj@GUIManager(application);
+            obj.GUI = CharacterizeElectronicsGUI;
+            obj.Handles = obj.GUI.Children;
         end
         
         function plotChannelAmplitude(obj)
-            set1Plot = obj.Handles.PreAmpPowerAxes;
-            set2Plot = obj.Handles.PostAmpPowerAxes;
+            set1Plot = obj.Handles(7);
+            set2Plot = obj.Handles(6);
             sa = obj.Application.getDevice(DeviceType.RigolSA, 0);
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
             
-            spacing = obj.FreqSep;
             sa.StartFreq = 84.9;
             sa.EndFreq = 85.1;
             span = sa.EndFreq - sa.StartFreq;
@@ -41,29 +41,32 @@ classdef CharacterizeElectronicsManager < GUIManager
             for i = 1:length(set1)
                 awg.changeAmplitude(set1(1, i));
                 pause(.5)
-                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
+                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, 0);
                 [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
                 'MinPeakDistance', span / 10,...
                 'MinPeakHeight', -40);
                 data1(1,i) = 10^(pks(1)/10);
                 data1(2,i) = set1(1, i);
             end
-            axes(set1Plot)
+            figure
+            axes
             plot(data1(2,:), data1(1,:))
             
             for i = 1:length(set2)
                 awg.changeAmplitude(set2(1, i));
                 pause(.5)
-                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
+                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, 0);
                 [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
                 'MinPeakDistance', span / 10,...
                 'MinPeakHeight', -40);
                 data2(1,i) = 10^(pks(1)/10);
                 data2(2,i) = set2(1, i);
-                data2(2,i)
             end
-            axes(set2Plot)
+            axes
             plot(data2(2,:), data2(1,:))
+            savefig(['C:\Users\Endres Lab\Box Sync\EndresLab\Projects\'...
+                'Optical trapping and imaging\Experiment\Figures\AWG'...
+                '\]);
         end
         
         function startTweezing(obj)
@@ -76,9 +79,9 @@ classdef CharacterizeElectronicsManager < GUIManager
             lambda = obj.Lambda;
             
             % Get plot axes handles
-            periodHandle = handles.PeriodAxes;
-            spectrumAxes1 = handles.PowerSpectrumAxes1;
-            spectrumAxes2 = handles.PowerSpectrumAxes2;
+            periodHandle = handles(8);
+            spectrumAxes1 = handles(9);
+            spectrumAxes2 = handles(5);
             
             % Setup awg
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
@@ -111,18 +114,22 @@ classdef CharacterizeElectronicsManager < GUIManager
             NFFT = length(discreteWFM.Signal);
             Fs = awg.SamplingRate;
             margin = 1.5 * 10^6;
+            % Impedance of load
+            R = 50; 
             leftBound = freqs(1,1) - margin;
             rightBound = freqs(1, length(freqs)) + margin;
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
-            
+            f = Fs/2*[-1:2/NFFT:1-2/NFFT];
             % Take what is essentially a DFFT, making sure to give it the
             % exact sampling rate of the awg
-            [pxx,f] = periodogram(discreteWFM.Signal * ...
-                awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
-            
-            % Plot on a log scale
-            plot(f, 10*log10(pxx))
+%             [pxx,f] = periodogram(discreteWFM.Signal * ...
+%                 awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
+            pxx =(fftshift(fft(discreteWFM.Signal * awg.ChAmps(1) / 1000, ...
+                NFFT))/ NFFT);
+            pxx = 10*log10((abs(pxx).^2)/R * 1000);
+            % Plot on a log scaleWW
+            plot(f, pxx)
             axis([leftBound, rightBound, -100, 10])
             title('Theoretical Power Spectrum')
             pause(1)
@@ -137,7 +144,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             pause(10)
             
             % Get and plot power spectrum
-            spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
+            spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, 0);
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
             axis([leftBound, rightBound, -100, 10])
