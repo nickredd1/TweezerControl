@@ -103,8 +103,9 @@ function GUI_DeleteFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Shutdown devices via application layer
-handles.application.shutdownDevices();
+% Shutdown program via application layer
+handles.application.shutdownEverything();
+
 end
 
 
@@ -153,8 +154,8 @@ function CharacterizeElectronicsSubMenu_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Save new GUI's handle
-handles.CharacterizeElectronicsGUI = CharacterizeElectronicsGUI;
+% Use Application object's method for opening this specific GUI
+handles.application.openCharacterizeElectronicsManager();
 
 % Save data
 guidata(hObject, handles);

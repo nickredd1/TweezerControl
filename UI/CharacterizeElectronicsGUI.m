@@ -22,7 +22,7 @@ function varargout = CharacterizeElectronicsGUI(varargin)
 
 % Edit the above text to modify the response to help CharacterizeElectronicsGUI
 
-% Last Modified by GUIDE v2.5 06-Sep-2017 16:15:57
+% Last Modified by GUIDE v2.5 06-Sep-2017 18:30:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -60,7 +60,8 @@ handles.GUI = findobj('Tag','GUI');
 
 % Get reference to application object
 data = guidata(handles.GUI);
-handles.application = data.application;
+handles.GUIManager = data.application.getManager(...
+    GUIType.CharacterizeElectronics);
 
 % Update handles structure
 guidata(hObject, handles);

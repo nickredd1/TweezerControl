@@ -1,8 +1,12 @@
-classdef GUIManager
+classdef GUIManager < handle & matlab.mixin.Heterogeneous
     %GUIMANAGER Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
+        % Reference to application so that we can control the devices it
+        % maintains
+        Application
+        
         % Reference to GUI object
         GUI
         
@@ -17,13 +21,16 @@ classdef GUIManager
     end
     
     methods
-        function obj = GUIManager(gui, handles)
+        function obj = GUIManager(application, gui, handles)
+            obj.Application = application;
             obj.GUI = gui;
             obj.Handles = handles;
         end
         
         function shutdownManager(obj)
-            close(obj.GUI)
+            if (ishandle(obj.GUI))
+                close(obj.GUI)
+            end
         end
     end
     
