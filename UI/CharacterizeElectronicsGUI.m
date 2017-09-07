@@ -22,7 +22,7 @@ function varargout = CharacterizeElectronicsGUI(varargin)
 
 % Edit the above text to modify the response to help CharacterizeElectronicsGUI
 
-% Last Modified by GUIDE v2.5 06-Sep-2017 18:30:54
+% Last Modified by GUIDE v2.5 06-Sep-2017 18:47:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -60,8 +60,8 @@ handles.GUI = findobj('Tag','GUI');
 
 % Get reference to application object
 data = guidata(handles.GUI);
-handles.GUIManager = data.application.getManager(...
-    GUIType.CharacterizeElectronics);
+data = data.application;
+handles.application = data;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -82,38 +82,67 @@ varargout{1} = handles.output;
 end
 
 
-
-function SetNumberOfTweezersEditText_Callback(hObject, eventdata, handles)
-% hObject    handle to SetNumberOfTweezersEditText (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of SetNumberOfTweezersEditText as text
-%        str2double(get(hObject,'String')) returns contents of SetNumberOfTweezersEditText as a double
-numTweezers = uint32(str2double(get(hObject,'String')));
-
-handles.application.outputNumTweezers(handles, numTweezers, 1500,...
-    500*10^3, 85, .5);
-end
-
-% --- Executes during object creation, after setting all properties.
-function SetNumberOfTweezersEditText_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to SetNumberOfTweezersEditText (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-end
-
-
 % --- Executes on button press in PlotChannelAmplitudeButton.
 function PlotChannelAmplitudeButton_Callback(hObject, eventdata, handles)
 % hObject    handle to PlotChannelAmplitudeButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.application.plotChannelAmplitude(handles);
+GUIManager = handles.application.getManager(...
+    GUIType.CharacterizeElectronics);
+GUIManager.plotChannelAmplitude();
+end
+
+
+% --- Executes when entered data in editable cell(s) in PropertyTable.
+function PropertyTable_CellEditCallback(hObject, eventdata, handles)
+% hObject    handle to PropertyTable (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.TABLE)
+%	Indices: row and column indices of the cell(s) edited
+%	PreviousData: previous data for the cell(s) edited
+%	EditData: string(s) entered by the user
+%	NewData: EditData or its converted form set on the Data property. Empty if Data was not changed
+%	Error: error string when failed to convert EditData to appropriate value for Data
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.CharacterizeElectronics);
+switch eventdata.Indices(1)
+    case 1
+        num = str2double(eventdata.EditData);
+        GUIManager.NumTweezers = num;
+    case 2
+        num = str2double(eventdata.EditData);
+        GUIManager.ChAmp = num;
+    case 3
+        num = str2double(eventdata.EditData);
+        GUIManager.FreqSep = num;
+    case 4
+        num = str2double(eventdata.EditData);
+        GUIManager.CenterFreq = num;
+    case 5
+        num = str2double(eventdata.EditData);
+        GUIManager.Lambda = num;
+end
+guidata(hObject, handles);
+end
+
+
+% --- Executes on button press in StartTweezeingButton.
+function StartTweezeingButton_Callback(hObject, eventdata, handles)
+% hObject    handle to StartTweezeingButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.CharacterizeElectronics);
+GUIManager.startTweezing();
+guidata(hObject, handles);
+end
+
+% --- Executes on button press in StopTweezingButton.
+function StopTweezingButton_Callback(hObject, eventdata, handles)
+% hObject    handle to StopTweezingButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.CharacterizeElectronics);
+GUIManager.Handles
 end

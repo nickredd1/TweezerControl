@@ -18,17 +18,17 @@ classdef CharacterizeElectronicsManager < GUIManager
     
     methods
         function obj = CharacterizeElectronicsManager(application)
-            obj = obj@GUIManager(application);
-            obj.GUI = CharacterizeElectronicsGUI;
-            obj.Handles = obj.GUI.Children;
+            obj = obj@GUIManager(application, gui, handles);
+            newGUI = CharacterizeElectronicsGUI;
         end
         
         function plotChannelAmplitude(obj)
-            set1Plot = obj.Handles(7);
-            set2Plot = obj.Handles(6);
+            set1Plot = obj.Handles.PreAmpPowerAxes;
+            set2Plot = obj.Handles.PostAmpPowerAxes;
             sa = obj.Application.getDevice(DeviceType.RigolSA, 0);
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
             
+            spacing = obj.FreqSep;
             sa.StartFreq = 84.9;
             sa.EndFreq = 85.1;
             span = sa.EndFreq - sa.StartFreq;
@@ -41,13 +41,12 @@ classdef CharacterizeElectronicsManager < GUIManager
             for i = 1:length(set1)
                 awg.changeAmplitude(set1(1, i));
                 pause(.5)
-                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, 0);
+                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
                 [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
                 'MinPeakDistance', span / 10,...
                 'MinPeakHeight', -40);
                 data1(1,i) = 10^(pks(1)/10);
                 data1(2,i) = set1(1, i);
-                data1(2,i)
             end
             axes(set1Plot)
             plot(data1(2,:), data1(1,:))
@@ -55,12 +54,13 @@ classdef CharacterizeElectronicsManager < GUIManager
             for i = 1:length(set2)
                 awg.changeAmplitude(set2(1, i));
                 pause(.5)
-                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, 0);
+                spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
                 [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
                 'MinPeakDistance', span / 10,...
                 'MinPeakHeight', -40);
                 data2(1,i) = 10^(pks(1)/10);
                 data2(2,i) = set2(1, i);
+                data2(2,i)
             end
             axes(set2Plot)
             plot(data2(2,:), data2(1,:))
@@ -76,9 +76,9 @@ classdef CharacterizeElectronicsManager < GUIManager
             lambda = obj.Lambda;
             
             % Get plot axes handles
-            periodHandle = handles(8);
-            spectrumAxes1 = handles(9);
-            spectrumAxes2 = handles(5);
+            periodHandle = handles.PeriodAxes;
+            spectrumAxes1 = handles.PowerSpectrumAxes1;
+            spectrumAxes2 = handles.PowerSpectrumAxes2;
             
             % Setup awg
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
@@ -137,7 +137,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             pause(10)
             
             % Get and plot power spectrum
-            spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, 0);
+            spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
             axis([leftBound, rightBound, -100, 10])

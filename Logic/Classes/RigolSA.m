@@ -99,8 +99,11 @@ classdef RigolSA < Device
             noisefl = mean(noise);
         end
         
-        % Gets power spectrum from Spectrum Analyzer
-        function spectrum = getPowerSpectrum(obj, start, last)
+        % Gets power spectrum from Spectrum Analyzer, where start is the
+        % beginning of the scan range, last is the end of the scan range,
+        % and atten is the attenuation of the signal (e.g. if we have an RF
+        % attenuator before the SA)
+        function spectrum = getPowerSpectrum(obj, start, last, atten)
             obj.StartFreq = start;
             obj.EndFreq = last;
             fprintf(obj.VISAUSB, [':sens:freq:star ', ...
@@ -126,7 +129,7 @@ classdef RigolSA < Device
 
             for i = 1:s(2)
                num = str2double(char(tempdata(i)));
-               data(1, i) = num;
+               data(1, i) = num  + atten;
             end
             
             switch obj.Units

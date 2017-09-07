@@ -71,7 +71,6 @@ handles.application = Application(true, handles);
 % below, all changes to the GUI's handles made by the Application object
 % will NOT be saved! 
 guidata(hObject, handles);
-
 end
 
 % --- Outputs from this function are returned to the command line.

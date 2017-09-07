@@ -21,10 +21,8 @@ classdef GUIManager < handle & matlab.mixin.Heterogeneous
     end
     
     methods
-        function obj = GUIManager(application, gui, handles)
+        function obj = GUIManager(application)
             obj.Application = application;
-            obj.GUI = gui;
-            obj.Handles = handles;
         end
         
         function shutdownManager(obj)

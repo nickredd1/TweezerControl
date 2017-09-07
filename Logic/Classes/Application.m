@@ -46,10 +46,7 @@ classdef Application < handle
         
         % Creates a CharacterizeElectronicsManager object
         function openCharacterizeElectronicsManager(obj)
-            newGUI = CharacterizeElectronicsGUI;
-            newHandles = newGUI.Children;
-            newGUIManager = CharacterizeElectronicsManager(obj,...
-                newGUI, newHandles);
+            newGUIManager = CharacterizeElectronicsManager(obj);
             obj.Managers = [obj.Managers, newGUIManager];
         end
         
