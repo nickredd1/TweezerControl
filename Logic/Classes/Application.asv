@@ -81,29 +81,30 @@ classdef Application < handle
             
             
         end
-        function outputNumTweezers(obj, handles, numTweezers)
-            
+        function outputNumTweezers(obj, handles, numTweezers,...
+                chAmp, freqSep, centerFreq, lambda)
+            % Get plot axes handles
             periodHandle = handles.PeriodAxes;
             spectrumAxes1 = handles.PowerSpectrumAxes1;
             spectrumAxes2 = handles.PowerSpectrumAxes2;
             
+            % Setup awg
+            awg = obj.getDevice(DeviceType.SpectrumAWG, 0);
+            awg.changeAmplitude(chAmp);
+            memSamples = awg.NumMemSamples;
+            samplingRate = double(awg.SamplingRate);
+            
+            % Setup spectrum analyzer
+            sa = obj.getDevice(DeviceType.RigolSA, 0);
             if (mod(numTweezers,2) == 0)
                 numTweezers = numTweezers + 1;
             end
-            center = double(85 * 10^6);
-            spacing = double(500 * 10^3);
-            awg = obj.getDevice(DeviceType.SpectrumAWG, 0);
-            awg.changeAmplitude(1500);
             
-            sa = obj.getDevice(DeviceType.RigolSA, 0);
-            memSamples = awg.NumMemSamples;
-            
-            samplingRate = double(awg.SamplingRate);
             if (numTweezers == 1)
-                freqs = [center];
+                freqs = [centerFreq];
             else
                 numTweezers = double(numTweezers);
-                freqs = center + spacing * ...
+                freqs = centerFreq + freqSep * ...
                 double(linspace(-(numTweezers-1)/2, ...
                 (numTweezers-1)/2,numTweezers));
             end
@@ -123,29 +124,27 @@ classdef Application < handle
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
             
-            [pxx,f] = periodogram(discreteWFM.Signal * awg.ChAmps(1),...
-                hamming(NFFT), NFFT, Fs, 'centered', 'power');
-           
+            [pxx,f] = periodogram(discreteWFM.Signal * awg.ChAmps(1) / 1000 ,...
+                [], NFFT, Fs, 'power');
             
-            plot(f, pxx)
-            axis([80*10^6, 90*10^6, 0, 100])
-            
+            plot(f, 10*log10(pxx))
+            axis([leftBound, rightBound, -100, 10])
+            title('Theoretical Power Spectrum')
             pause(1)
+            
             axes(periodHandle)
             plot(t,  discreteWFM.Signal);
-            
+            title('Waveform Period')
             
             awg.output(discreteWFM);
-            
-            pause(2)
+            pause(5)
             spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
             
             cla(spectrumAxes2)
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
-%             [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-%                 'MinPeakDistance', spacing / 2,...
-%                 'MinPeakHeight', -60)
+            axis([leftBound, rightBound, -100, 10])
+            title('Real Power Spectrum')
         end
         
         % Begins a loop that essentially takes pictures and displays them

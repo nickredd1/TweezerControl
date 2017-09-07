@@ -81,39 +81,40 @@ classdef Application < handle
             
             
         end
-        function outputNumTweezers(obj, handles, numTweezers)
-            
+        function outputNumTweezers(obj, handles, numTweezers,...
+                chAmp, freqSep, centerFreq, lambda)
+            % Get plot axes handles
             periodHandle = handles.PeriodAxes;
             spectrumAxes1 = handles.PowerSpectrumAxes1;
             spectrumAxes2 = handles.PowerSpectrumAxes2;
             
-            if (mod(numTweezers,2) == 0)
-                numTweezers = numTweezers + 1;
-            end
-            center = double(85 * 10^6);
-            spacing = double(500 * 10^3);
+            % Setup awg
             awg = obj.getDevice(DeviceType.SpectrumAWG, 0);
-            awg.changeAmplitude(1500);
+            awg.changeAmplitude(chAmp);
             
+            % Convert to Hz
+            centerFreq = centerFreq * 10^6;
+            
+            % Setup spectrum analyzer
             sa = obj.getDevice(DeviceType.RigolSA, 0);
-            memSamples = awg.NumMemSamples;
             
-            samplingRate = double(awg.SamplingRate);
+            % Condition on number of tweezers
             if (numTweezers == 1)
-                freqs = [center];
+                freqs = [centerFreq];
             else
                 numTweezers = double(numTweezers);
-                freqs = center + spacing * ...
+                freqs = centerFreq + freqSep * ...
                 double(linspace(-(numTweezers-1)/2, ...
                 (numTweezers-1)/2,numTweezers));
             end
             
-            amps = double(ones(1,length(freqs)));
+            % Create waveform object from given data
+            amps = lambda * double(ones(1,length(freqs)));
             phases = double(zeros(1,length(freqs)));
-            t = double((1:memSamples)/samplingRate);
+            t = double((1:awg.NumMemSamples)/awg.SamplingRate);
             discreteWFM = Waveform(freqs, amps, phases, t);
             
-            % Plotting 
+            % Calculate theoretical power spectrum of waveform
             axes(spectrumAxes1)
             NFFT = length(discreteWFM.Signal);
             Fs = awg.SamplingRate;
@@ -123,28 +124,32 @@ classdef Application < handle
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
             
-            [pxx,f] = periodogram(discreteWFM.Signal * awg.ChAmps(1) / 1000,...
-                [], NFFT, Fs, 'power');
+            % Take what is essentially a DFFT, making sure to give it the
+            % exact sampling rate of the awg
+            [pxx,f] = periodogram(discreteWFM.Signal * ...
+                awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
             
+            % Plot on a log scale
             plot(f, 10*log10(pxx))
-            axis([80*10^6, 90*10^6, -100, 20])
-            
+            axis([leftBound, rightBound, -100, 10])
+            title('Theoretical Power Spectrum')
             pause(1)
+            
+            % Plot waveform
             axes(periodHandle)
             plot(t,  discreteWFM.Signal);
+            title('Waveform Period')
             
-            
+            % Output created Waveform object
             awg.output(discreteWFM);
+            pause(5)
             
-            pause(2)
+            % Get and plot power spectrum
             spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq);
-            
-            cla(spectrumAxes2)
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
-%             [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-%                 'MinPeakDistance', spacing / 2,...
-%                 'MinPeakHeight', -60)
+            axis([leftBound, rightBound, -100, 10])
+            title('Real Power Spectrum')
         end
         
         % Begins a loop that essentially takes pictures and displays them

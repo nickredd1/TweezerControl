@@ -91,7 +91,8 @@ function SetNumberOfTweezersEditText_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of SetNumberOfTweezersEditText as a double
 numTweezers = uint32(str2double(get(hObject,'String')));
 
-handles.application.outputNumTweezers(handles, numTweezers);
+handles.application.outputNumTweezers(handles, numTweezers, 1500,...
+    500*10^3, 85, .5);
 end
 
 % --- Executes during object creation, after setting all properties.
