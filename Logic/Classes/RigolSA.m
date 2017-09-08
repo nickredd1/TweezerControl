@@ -143,6 +143,19 @@ classdef RigolSA < Device
             spectrum = data;
         end
         
+        % Get total RF power
+        function power = getTotalPower(obj, start, last, atten, pauseTime)
+            spectrum = obj.getPowerSpectrum(start, last, atten, pauseTime);
+            df = (spectrum(2,end) - spectrum(2,1)) / length(spectrum);
+            sum = 0.0;
+            for i = 1:length(spectrum)
+                linear = 10^(spectrum(1,i) / 10);
+                sum = sum + linear * df;
+            end
+            % power in mW
+            power = 10 * log10(sum/(3 * 10^3));
+        end
+        
         function displayDeviceInfo(obj)
             % Extend inherited displayDeviceInfo() function
             displayDeviceInfo@Device(obj);

@@ -53,21 +53,23 @@ classdef CharacterizeElectronicsManager < GUIManager
                 
                 sa.StartFreq = (discreteWFM.Freqs(1,1) / 10^6) - .1; 
                 sa.EndFreq = (discreteWFM.Freqs(1,end) / 10^6) + .1; 
-                
+                span = sa.EndFreq - sa.StartFreq;
+                pauseTime = .5 + .5 * floor(span);
                 for i = 1:length(set1)
                     awg.changeAmplitude(set1(1, i));
-                    spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq,...
+                    power = sa.getTotalPower(sa.StartFreq, sa.EndFreq,...
                         attenuation, pauseTime);
-                    [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-                    'MinPeakDistance', obj.FreqSep / 3,...
-                    'MinPeakHeight', -40);
+%                     [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
+%                     'MinPeakDistance', obj.FreqSep / 3,...
+%                     'MinPeakHeight', -40);
+                    
                     volts = zeros(1,20);
                     for k = 1:length(volts)
                         temp = nidaq.sampleInputs();
                         volts(1,k) = temp(1,1);
                     end
                     volts = mean(volts);
-                    data1(1, (numFreqs-1) * length(set1) + i)= pks(1);
+                    data1(1, (numFreqs-1) * length(set1) + i)= power;
                     data1(2, (numFreqs-1) * length(set1) + i)= volts;
                     data1(3, (numFreqs-1) * length(set1) + i)= set1(1, i);
                     data1(4, (numFreqs-1) * length(set1) + i)= numFreqs;
@@ -75,18 +77,18 @@ classdef CharacterizeElectronicsManager < GUIManager
                 
                 for i = 1:length(set2)
                     awg.changeAmplitude(set2(1, i));
-                    spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq,...
+                    power = sa.getTotalPower(sa.StartFreq, sa.EndFreq,...
                         attenuation, pauseTime);
-                    [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-                    'MinPeakDistance', obj.FreqSep / 3,...
-                    'MinPeakHeight', -40);
+%                     [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
+%                     'MinPeakDistance', obj.FreqSep / 3,...
+%                     'MinPeakHeight', -40);
                     volts = zeros(1,20);
                     for k = 1:length(volts)
                         temp = nidaq.sampleInputs();
                         volts(1,k) = temp(1,1);
                     end
                     volts = mean(volts);
-                    data2(1,(numFreqs-1) * length(set2) + i) = pks(1);
+                    data2(1,(numFreqs-1) * length(set2) + i) = power;
                     data2(2,(numFreqs-1) * length(set2) + i) = volts;
                     data2(3,(numFreqs-1) * length(set2) + i) = set2(1, i);
                     data2(4,(numFreqs-1) * length(set2) + i) = numFreqs;
@@ -95,15 +97,26 @@ classdef CharacterizeElectronicsManager < GUIManager
             figure
             subplot(2,2,1) 
             stem3(data1(3,:), data1(4,:), data1(1,:))
-        
+            
+            title(['RF Power (dBm) vs Channel Amplitude (mVp)'...
+                'for Low Gain Channel'])
+            
             subplot(2,2,2) 
-            stem3(data2(3,:), data2(4,:), data2(1,:))
+            stem3(data1(3,:), data1(4,:), data1(2,:))
+            zlim([.5 1.1])
+            title(['RF Power (V) vs Channel Amplitude (mVp)'...
+                'for Low Gain Channel'])
             
             subplot(2,2,3) 
-            stem3(data1(3,:), data1(4,:), data1(2,:))
+            stem3(data2(3,:), data2(4,:), data2(1,:))
+            title(['RF Power (dBm) vs Channel Amplitude (mVp)'...
+                'for High Gain Channel'])
             
             subplot(2,2,4) 
             stem3(data2(3,:), data2(4,:), data2(2,:))
+            zlim([.5 1.1])
+            title(['RF Power (V) vs Channel Amplitude (mVp)'...
+                'for High Gain Channel'])
             
             savefig(['C:\Users\Endres Lab\Box Sync\EndresLab\Projects\'...
                 'Optical trapping and imaging\Experiment\Figures\AWG'...
