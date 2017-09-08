@@ -22,7 +22,7 @@ function varargout = CharacterizeElectronicsGUI(varargin)
 
 % Edit the above text to modify the response to help CharacterizeElectronicsGUI
 
-% Last Modified by GUIDE v2.5 06-Sep-2017 18:47:47
+% Last Modified by GUIDE v2.5 07-Sep-2017 15:32:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -32,6 +32,7 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_OutputFcn',  @CharacterizeElectronicsGUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
+
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -81,7 +82,6 @@ function varargout = CharacterizeElectronicsGUI_OutputFcn(hObject, eventdata, ha
 varargout{1} = handles.output;
 end
 
-
 % --- Executes on button press in PlotChannelAmplitudeButton.
 function PlotChannelAmplitudeButton_Callback(hObject, eventdata, handles)
 % hObject    handle to PlotChannelAmplitudeButton (see GCBO)
@@ -89,7 +89,7 @@ function PlotChannelAmplitudeButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.CharacterizeElectronics);
-GUIManager.plotChannelAmplitude();
+GUIManager.characterizeDACs();
 end
 
 
@@ -121,6 +121,9 @@ switch eventdata.Indices(1)
     case 5
         num = str2double(eventdata.EditData);
         GUIManager.Lambda = num;
+    case 6
+        num = str2double(eventdata.EditData);
+        GUIManager.Attenuation = num;
 end
 guidata(hObject, handles);
 end
@@ -133,6 +136,7 @@ function StartTweezeingButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.CharacterizeElectronics);
+
 GUIManager.startTweezing();
 guidata(hObject, handles);
 end
@@ -144,5 +148,18 @@ function StopTweezingButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.CharacterizeElectronics);
-GUIManager.Handles
+
+GUIManager.stopTweezing();
+end
+
+
+% --- Executes on button press in MonitorPowerButton.
+function MonitorPowerButton_Callback(hObject, eventdata, handles)
+% hObject    handle to MonitorPowerButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.CharacterizeElectronics);
+GUIManager.monitorPower();
+guidata(hObject, handles);
 end

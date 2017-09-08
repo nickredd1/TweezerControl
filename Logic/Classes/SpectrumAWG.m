@@ -274,6 +274,12 @@ classdef SpectrumAWG < Device
             disp('Outputting Waveform')
         end
         
+        function stopOutput(obj)
+            % Stop card
+            errorCode = spcm_dwSetParam_i32(obj.CardHandle.hDrv,...
+                        obj.RegMap('SPC_M2CMD'),...
+                        obj.RegMap('M2CMD_CARD_STOP'));
+        end
         function changeAmplitude(obj, amp)
              %[80, 480]mVp (low power path), [420, 2000] (high power path)
             channel = 0; % 'SPC_AMP0'

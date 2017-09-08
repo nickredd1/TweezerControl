@@ -188,6 +188,7 @@ classdef Application < handle
             %obj.addDevice(DeviceType.BaslerCamera, serials);
             
             obj.addDevice(DeviceType.RigolSA, '');
+            obj.addDevice(DeviceType.NIDAQ, '');
         end
         
         % Helper function for finding the number of devices of a given type

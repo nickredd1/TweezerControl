@@ -103,14 +103,15 @@ classdef RigolSA < Device
         % beginning of the scan range, last is the end of the scan range,
         % and atten is the attenuation of the signal (e.g. if we have an RF
         % attenuator before the SA)
-        function spectrum = getPowerSpectrum(obj, start, last, atten)
+        function spectrum = getPowerSpectrum(obj, start, last, atten,...
+                pauseTime)
             obj.StartFreq = start;
             obj.EndFreq = last;
             fprintf(obj.VISAUSB, [':sens:freq:star ', ...
                 num2str(obj.StartFreq), obj.Units]);
             fprintf(obj.VISAUSB, [':sens:freq:stop ', ...
                 num2str(obj.EndFreq), obj.Units]);
-            
+            pause(pauseTime);
             % Read data (in ASCII)
             fprintf(obj.VISAUSB, ':trac:data? trace1' );
             [data, len, msg] = fread(obj.VISAUSB, obj.BufferSize); 
