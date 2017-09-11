@@ -223,7 +223,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             lambda = obj.Lambda;
             % Attenuation from 
             attenuation = obj.Attenuation;
-            pauseTime = 10;
+            pauseTime = 3;
             % Get plot axes handles
             periodHandle = handles(9);
             spectrumAxes1 = handles(10);
@@ -270,8 +270,9 @@ classdef CharacterizeElectronicsManager < GUIManager
             NFFT = length(discreteWFM.Signal);
             Fs = awg.SamplingRate;
             margin = 1.5 * 10^6;
-            % Impedance of load
-            R = 50; 
+            % Impedance of load, should be 50 ohms but 90 seems to fit the
+            % theoretical power spectrum to the real power spectrum better
+            R = 90; 
             leftBound = freqs(1,1) - margin;
             rightBound = freqs(1, length(freqs)) + margin;
             sa.StartFreq = leftBound / 10^6;
@@ -281,20 +282,30 @@ classdef CharacterizeElectronicsManager < GUIManager
             % exact sampling rate of the awg
 %             [pxx,f] = periodogram(discreteWFM.Signal * ...
 %                 awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
-            pxx =(fftshift(fft(discreteWFM.Signal * awg.ChAmps(1) / 1000, ...
+            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000, ...
                 NFFT))/ NFFT);
             pxx = 10*log10((abs(pxx).^2)/R * 1000);
             pxx = pxx + attenuation;
+            [pk, lc] = findpeaks(pxx, f, 'MinPeakHeight', -50);
             % Plot on a log scaleWW
-            plot(f, pxx)
+            plot(f, pxx, lc, pk, 'x')
+            text(obj.CenterFreq * 10^6 , pk(1) + 20,...
+                sprintf('Peak: %d', floor(pk(1, 1))));
+            
             axis([leftBound, rightBound, -100, 40])
+            grid
             title('Theoretical Power Spectrum')
+            xlabel('Frequency (Hz)')
+            ylabel('Power (dBm)')
             pause(1)
             
             % Plot waveform
             axes(periodHandle)
             plot(t,  discreteWFM.Signal);
+            grid
             title('Waveform Period')
+            xlabel('Time (S)')
+            ylabel('Amplitude')
             
             % Output created Waveform object
             awg.output(discreteWFM);
@@ -303,9 +314,17 @@ classdef CharacterizeElectronicsManager < GUIManager
             spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, ...
                 attenuation, pauseTime);
             axes(spectrumAxes2)
-            plot(spec(2,:), spec(1,:))
+            [pk, lc] = findpeaks(spec(1,:), spec(2,:),...
+                'MinPeakHeight', -50);
+            plot(spec(2,:), spec(1,:), lc, pk, 'x')
+            text(obj.CenterFreq * 10^6 , pk(1) + 20,...
+                sprintf('Peak: %d', floor(pk(1, 1))));
+            
             axis([leftBound, rightBound, -100, 40])
+            grid
             title('Real Power Spectrum')
+            xlabel('Frequency (Hz)')
+            ylabel('Power (dBm)')
         end
         
         function stopTweezing(obj)
@@ -423,5 +442,54 @@ classdef CharacterizeElectronicsManager < GUIManager
         end
     end
     
+    methods
+        % Setter function for number of tweezers
+        function set.NumTweezers(obj, num)
+            if (isnumeric(num) && num >= 1)
+                obj.NumTweezers = floor(num);
+            else 
+                fprintf('Error: expected integer >= 1. Received:\n');
+                disp(num)
+            end
+        end
+
+        % Setter function for channel amplitude of awg
+        function set.ChAmp(obj, num)
+            if (isnumeric(num) && num >= 80 && num <= 1400)
+                obj.ChAmp = floor(num);
+            else 
+                fprintf(['Error: expected integer >= 80 and <= 1400.'...
+                    'Received:\n']);
+                disp(num)
+            end
+        end        
+        
+        % Setter function for frequency separation of awg
+        function set.FreqSep(obj, num)
+            awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
+            sep = awg.FreqRes;
+            % Make sure we have the frequency separation as a multiple of
+            % the frequency resolution of the awg, or else the waveform
+            % period will NOT have a smooth/continuous period
+            if (isnumeric(num) && num >= 0 && mod(num, sep) == 0)
+                obj.FreqSep = num;
+            else 
+                fprintf(['Error: expected integer multiple of %d.'...
+                    'Received:\n'], sep);
+                disp(num)
+            end
+        end
+        
+        % Setter function for center frequency of awg
+        function set.CenterFreq(obj, num)
+            if (isnumeric(num) && num >= 50 && num <= 110)
+                obj.CenterFreq = num;
+            else 
+                fprintf(['Error: expected integer >= 50 and <= 110'...
+                    'Received:\n']);
+                disp(num)
+            end
+        end
+    end
 end
 

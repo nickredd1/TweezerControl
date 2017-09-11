@@ -54,49 +54,69 @@ classdef CharacterizeElectronicsManager < GUIManager
                 sa.StartFreq = (discreteWFM.Freqs(1,1) / 10^6) - .1; 
                 sa.EndFreq = (discreteWFM.Freqs(1,end) / 10^6) + .1; 
                 span = sa.EndFreq - sa.StartFreq;
-                
+                pauseTime = .5 + .5 * floor(span);
                 for i = 1:length(set1)
                     awg.changeAmplitude(set1(1, i));
-                    spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq,...
+                    power = sa.getTotalPower(sa.StartFreq, sa.EndFreq,...
                         attenuation, pauseTime);
-                    [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-                    'MinPeakDistance', span / 2,...
-                    'MinPeakHeight', -40);
+%                     [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
+%                     'MinPeakDistance', obj.FreqSep / 3,...
+%                     'MinPeakHeight', -40);
                     
-                    volts = nidaq.sampleInputs();
-                    data1(1, (numFreqs-1) * length(set1) + i)= pks(1);
-                    data1(2, (numFreqs-1) * length(set1) + i)= volts(1, 1);
+                    volts = zeros(1,20);
+                    for k = 1:length(volts)
+                        temp = nidaq.sampleInputs();
+                        volts(1,k) = temp(1,1);
+                    end
+                    volts = mean(volts);
+                    data1(1, (numFreqs-1) * length(set1) + i)= power;
+                    data1(2, (numFreqs-1) * length(set1) + i)= volts;
                     data1(3, (numFreqs-1) * length(set1) + i)= set1(1, i);
                     data1(4, (numFreqs-1) * length(set1) + i)= numFreqs;
                 end
                 
                 for i = 1:length(set2)
                     awg.changeAmplitude(set2(1, i));
-                    spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq,...
+                    power = sa.getTotalPower(sa.StartFreq, sa.EndFreq,...
                         attenuation, pauseTime);
-                    [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-                    'MinPeakDistance', span / 2,...
-                    'MinPeakHeight', -40);
-                    volts = nidaq.sampleInputs();
-                    
-                    data2(1,(numFreqs-1) * length(set2) + i) = pks(1);
-                    data2(2,(numFreqs-1) * length(set2) + i) = volts(1, 1);
+%                     [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
+%                     'MinPeakDistance', obj.FreqSep / 3,...
+%                     'MinPeakHeight', -40);
+                    volts = zeros(1,20);
+                    for k = 1:length(volts)
+                        temp = nidaq.sampleInputs();
+                        volts(1,k) = temp(1,1);
+                    end
+                    volts = mean(volts);
+                    data2(1,(numFreqs-1) * length(set2) + i) = power;
+                    data2(2,(numFreqs-1) * length(set2) + i) = volts;
                     data2(3,(numFreqs-1) * length(set2) + i) = set2(1, i);
                     data2(4,(numFreqs-1) * length(set2) + i) = numFreqs;
                 end
             end
             figure
             subplot(2,2,1) 
-            plot3(data1(3,:), data1(4,:), data1(1,:))
-        
+            stem3(data1(3,:), data1(4,:), data1(1,:))
+            
+            title(['RF Power (dBm) vs Channel Amplitude (mVp)'...
+                'for Low Gain Channel'])
+            
             subplot(2,2,2) 
-            plot3(data2(3,:), data2(4,:), data2(1,:))
+            stem3(data1(3,:), data1(4,:), data1(2,:))
+            zlim([.5 1.1])
+            title(['RF Power (V) vs Channel Amplitude (mVp)'...
+                'for Low Gain Channel'])
             
             subplot(2,2,3) 
-            plot3(data1(3,:), data1(4,:), data1(2,:))
+            stem3(data2(3,:), data2(4,:), data2(1,:))
+            title(['RF Power (dBm) vs Channel Amplitude (mVp)'...
+                'for High Gain Channel'])
             
             subplot(2,2,4) 
-            plot3(data2(3,:), data2(4,:), data2(2,:))
+            stem3(data2(3,:), data2(4,:), data2(2,:))
+            zlim([.5 1.1])
+            title(['RF Power (V) vs Channel Amplitude (mVp)'...
+                'for High Gain Channel'])
             
             savefig(['C:\Users\Endres Lab\Box Sync\EndresLab\Projects\'...
                 'Optical trapping and imaging\Experiment\Figures\AWG'...
@@ -261,19 +281,26 @@ classdef CharacterizeElectronicsManager < GUIManager
             % exact sampling rate of the awg
 %             [pxx,f] = periodogram(discreteWFM.Signal * ...
 %                 awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
-            pxx =(fftshift(fft(discreteWFM.Signal * awg.ChAmps(1) / 1000, ...
+            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000, ...
                 NFFT))/ NFFT);
             pxx = 10*log10((abs(pxx).^2)/R * 1000);
             pxx = pxx + attenuation;
+            [pk, lc] = findpeaks(pxx, f, 'MinPeakHeight', -50);
             % Plot on a log scaleWW
-            plot(f, pxx)
+            plot(f, pxx, lc, pk)
+            text(lc(1, 1), pk(1, 1), ...
+                    sprintf('(%d, %d)', uint32(lc(1, 1) / 10^6),...
+                    uint32(pk(1, 1))))
+            
             axis([leftBound, rightBound, -100, 40])
+            grid
             title('Theoretical Power Spectrum')
             pause(1)
             
             % Plot waveform
             axes(periodHandle)
             plot(t,  discreteWFM.Signal);
+            grid
             title('Waveform Period')
             
             % Output created Waveform object
@@ -285,6 +312,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
             axis([leftBound, rightBound, -100, 40])
+            grid
             title('Real Power Spectrum')
         end
         
@@ -296,6 +324,8 @@ classdef CharacterizeElectronicsManager < GUIManager
             freqSep = obj.FreqSep;
             centerFreq = obj.CenterFreq;
             lambda = obj.Lambda;
+            attenuation = obj.Attenuation;
+            
             %attenuation 
             % Get plot axes handles
             periodHandle = handles(9);
@@ -360,10 +390,10 @@ classdef CharacterizeElectronicsManager < GUIManager
             
             % Stop output of AWG
             awg.output(discreteWFM);
-            pause(10)
             
             % Get and plot power spectrum
-            spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq, 30, 5);
+            spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq,...
+                attenuation, 5);
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
             axis([leftBound, rightBound, -100, 40])
@@ -401,5 +431,54 @@ classdef CharacterizeElectronicsManager < GUIManager
         end
     end
     
+    methods
+        % Setter function for number of tweezers
+        function set.NumTweezers(obj, num)
+            if (isnumeric(num) && num >= 1)
+                obj.NumTweezers = floor(num);
+            else 
+                fprintf('Error: expected integer >= 1. Received:\n');
+                disp(num)
+            end
+        end
+
+        % Setter function for channel amplitude of awg
+        function set.ChAmp(obj, num)
+            if (isnumeric(num) && num >= 80 && num <= 1400)
+                obj.ChAmp = floor(num);
+            else 
+                fprintf(['Error: expected integer >= 80 and <= 1400.'...
+                    'Received:\n']);
+                disp(num)
+            end
+        end        
+        
+        % Setter function for frequency separation of awg
+        function set.FreqSep(obj, num)
+            awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
+            sep = awg.FreqRes;
+            % Make sure we have the frequency separation as a multiple of
+            % the frequency resolution of the awg, or else the waveform
+            % period will NOT have a smooth/continuous period
+            if (isnumeric(num) && num >= 0 && mod(num, sep) == 0)
+                obj.FreqSep = num;
+            else 
+                fprintf(['Error: expected integer multiple of %d.'...
+                    'Received:\n'], sep);
+                disp(num)
+            end
+        end
+        
+        % Setter function for center frequency of awg
+        function set.CenterFreq(obj, num)
+            if (isnumeric(num) && num >= 50 && num <= 110)
+                obj.CenterFreq = num;
+            else 
+                fprintf(['Error: expected integer >= 50 and <= 110'...
+                    'Received:\n']);
+                disp(num)
+            end
+        end
+    end
 end
 

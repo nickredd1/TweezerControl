@@ -271,6 +271,7 @@ classdef SpectrumAWG < Device
             end
             
             success = true;
+            disp('Outputting Waveform')
         end
         
         function stopOutput(obj)
@@ -284,17 +285,16 @@ classdef SpectrumAWG < Device
             channel = 0; % 'SPC_AMP0'
             error = 0;
             if (isnumeric(amp) && amp >= 80 && amp <= 2500)
-                    % 30010 = SPC_AMP0 
-                if obj.CardHandle.AO.gainProgrammable == true
-                    error = error + spcm_dwSetParam_i32 (...
-                        obj.CardHandle.hDrv, 30010 + channel * 100, amp);  
-                end
-
-                [success, obj.CardHandle] = spcMCheckSetError(error,...
-                    obj.CardHandle);
-            else
                 
             end
+            % 30010 = SPC_AMP0 
+            if obj.CardHandle.AO.gainProgrammable == true
+                error = error + spcm_dwSetParam_i32 (...
+                    obj.CardHandle.hDrv, 30010 + channel * 100, amp);  
+            end
+
+            [success, obj.CardHandle] = spcMCheckSetError(error,...
+                obj.CardHandle);
         end
     end
     

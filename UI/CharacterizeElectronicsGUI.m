@@ -108,6 +108,7 @@ GUIManager = handles.application.getManager(...
 switch eventdata.Indices(1)
     case 1
         num = str2double(eventdata.EditData);
+        
         GUIManager.NumTweezers = num;
     case 2
         num = str2double(eventdata.EditData);
