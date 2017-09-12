@@ -22,7 +22,7 @@ function varargout = UniformArrayGUI(varargin)
 
 % Edit the above text to modify the response to help UniformArrayGUI
 
-% Last Modified by GUIDE v2.5 12-Sep-2017 14:47:14
+% Last Modified by GUIDE v2.5 12-Sep-2017 15:46:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;

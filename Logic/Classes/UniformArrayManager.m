@@ -24,6 +24,12 @@ classdef UniformArrayManager < GUIManager
         FilePath
         
         MonitoringPower
+        
+        ImageFigure
+        
+        PictureAxes1
+        
+        PictureAxes2
     end
     
     
@@ -69,11 +75,12 @@ classdef UniformArrayManager < GUIManager
             % Create waveform object from given data with random phases
             % such that we attempt to avoid nonliner frequency mixing and
             % interference
-            amps = lambda * double(ones(1,length(freqs)));
+            amps = double(ones(1,length(freqs)));
             phases = 2 * pi * rand(1, length(freqs));
             controls = double(ones(1, length(freqs)));
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, controls, amps, phases, t);
+            discreteWFM = Waveform(lambda, freqs, controls, amps,...
+                phases, t);
             
             % Output created Waveform object
             awg.output(discreteWFM);
@@ -90,10 +97,9 @@ classdef UniformArrayManager < GUIManager
             % Attenuation from various RF components in system
             attenuation = obj.Attenuation;
             % Get plot axes handles
-            periodHandle = handles(14);
-            spectrumAxes1 = handles(15);
-            spectrumAxes2 = handles(13);
-            pictureAxes = handles(10);
+            periodHandle = handles(13);
+            spectrumAxes1 = handles(14);
+            spectrumAxes2 = handles(12);
             
             % Setup awg
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
@@ -121,7 +127,7 @@ classdef UniformArrayManager < GUIManager
             % Create waveform object from given data with random phases
             % such that we attempt to avoid nonliner frequency mixing and
             % interference
-            amps = lambda * double(ones(1,length(freqs)));
+            amps = double(ones(1,length(freqs)));
             phases = 2 * pi * rand(1, length(freqs));
             controls = double(ones(1, length(freqs)));
 %             load(['C:\Users\Endres Lab\Box Sync\EndresLab\Projects\'...
@@ -133,7 +139,8 @@ classdef UniformArrayManager < GUIManager
 %             phases = wfm.phase;
             
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, controls, amps, phases, t);
+            discreteWFM = Waveform(lambda, freqs, controls, amps,...
+                phases, t);
             
             % Calculate theoretical power spectrum of waveform
             axes(spectrumAxes1)
@@ -154,8 +161,8 @@ classdef UniformArrayManager < GUIManager
             % exact sampling rate of the awg
 %             [pxx,f] = periodogram(discreteWFM.Signal * ...
 %                 awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
-            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000, ...
-                NFFT))/ NFFT);
+            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000 ...
+                , NFFT))/ NFFT);
             pxx = 10*log10((abs(pxx).^2)/R * 1000);
             pxx = pxx;
             [pk, lc] = findpeaks(pxx, f, 'MinPeakHeight', -50);
@@ -199,10 +206,29 @@ classdef UniformArrayManager < GUIManager
             ylabel('Power (dBm)')
             
             % Take sample image from basler to show tweezers
-            axes(pictureAxes)
-            [success, image, timestamp] = cam.capture();
-            imshow(image)
-            title('Tweezer Image')
+            if (ishandle(obj.ImageFigure))
+                figure(obj.ImageFigure)
+%                 axes(obj.PictureAxes1)
+%                 [success, image, timestamp] = cam.capture();
+%                 imshow(image)
+%                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
+                
+                axes(obj.PictureAxes2)
+                [success, image, timestamp] = cam.capture();
+                imshow(image)
+                title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
+            else 
+            	obj.ImageFigure = figure('Name', 'Images');
+%                 obj.PictureAxes1 = axes('Position', [0,.55, 1, .4])
+%                 [success, image, timestamp] = cam.capture();
+%                 imshow(image)
+%                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
+                
+                obj.PictureAxes2 = axes('Position', [0,.05, 1, .9])
+                [success, image, timestamp] = cam.capture();
+                imshow(image)
+                title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
+            end
         end
         
         function stopTweezing(obj)
@@ -217,10 +243,10 @@ classdef UniformArrayManager < GUIManager
             
             %attenuation 
             % Get plot axes handles
-            periodHandle = handles(14);
-            spectrumAxes1 = handles(15);
-            spectrumAxes2 = handles(13);
-            pictureAxes = handles(10);
+            periodHandle = handles(13);
+            spectrumAxes1 = handles(14);
+            spectrumAxes2 = handles(12);
+            pictureAxes = handles(9);
             
             % Setup awg
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
@@ -245,12 +271,14 @@ classdef UniformArrayManager < GUIManager
                 (numTweezers-1)/2,numTweezers));
             end
             
-            % Create waveform object from given data
-            amps = 0 * double(ones(1,length(freqs)));
+            % Create waveform object with 0 amplitude so we are sure that
+            % nothing is output from the awg
+            amps = double(zeros(1,length(freqs)));
             phases = double(zeros(1,length(freqs)));
             controls = double(ones(1,length(freqs)));
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, controls, amps, phases, t);
+            discreteWFM = Waveform(lambda, freqs, controls, amps,...
+                phases, t);
             
             % Calculate theoretical power spectrum of waveform
             axes(spectrumAxes1)
@@ -269,8 +297,8 @@ classdef UniformArrayManager < GUIManager
             % exact sampling rate of the awg
 %             [pxx,f] = periodogram(discreteWFM.Signal * ...
 %                 awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
-            pxx =(fftshift(fft(discreteWFM.Signal * awg.ChAmps(1) / 1000, ...
-                NFFT))/ NFFT);
+            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000 ...
+                , NFFT))/ NFFT);
             pxx = 10*log10((abs(pxx).^2)/R * 1000);
             % Plot on a log scaleWW
             plot(f, pxx)
@@ -311,8 +339,10 @@ classdef UniformArrayManager < GUIManager
             if (~obj.MonitoringPower)
                 obj.MonitoringPower = true;
                 nidaq = obj.Application.getDevice(DeviceType.NIDAQ, 0);
-                set1Plot = obj.Handles(12);
-                set2Plot = obj.Handles(11);
+                set1Plot = obj.Handles(11);
+                set2Plot = obj.Handles(10);
+                pictureAxes = obj.PictureAxes2;
+                cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
                 while(obj.MonitoringPower)
                         voltages = nidaq.sampleInputs();
                         obj.PreAmpPowerData = circshift(...
@@ -329,6 +359,12 @@ classdef UniformArrayManager < GUIManager
                         axes(set2Plot)
                         plot(obj.PostAmpPowerData(1,:))
                         title('Post Amp Power')
+                        
+                        % Take sample image from basler to show tweezers
+                        [success, image, timestamp] = cam.capture();
+                        imshow(image, 'Parent', pictureAxes)
+                        title(sprintf('Tweezer Image (Basler #%d)',...
+                            cam.Index), 'Parent', pictureAxes)
                 end
             else
                 obj.MonitoringPower = false;
@@ -337,7 +373,7 @@ classdef UniformArrayManager < GUIManager
         end
         
         function defineROI(obj)
-            pictureAxes = obj.Handles(10);
+            pictureAxes = obj.PictureAxes2;
             axes(pictureAxes)
             rect = getrect;
             rect = uint32(rect);
@@ -350,14 +386,13 @@ classdef UniformArrayManager < GUIManager
             end
             
             % Take sample image from basler to show tweezers
-            axes(pictureAxes)
             [success, image, timestamp] = cam.capture();
             imshow(image)
             title('Tweezer Image')
         end
         
         function resetROI(obj)
-            pictureAxes = obj.Handles(10);
+            pictureAxes = obj.PictureAxes2;
             axes(pictureAxes)
             cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
             if(isa(cam, 'Device'))
@@ -365,7 +400,6 @@ classdef UniformArrayManager < GUIManager
             end
             
             % Take sample image from basler to show tweezers
-            axes(pictureAxes)
             [success, image, timestamp] = cam.capture();
             imshow(image)
             title('Tweezer Image')
@@ -423,8 +457,8 @@ classdef UniformArrayManager < GUIManager
         
         % Setter function for center frequency of awg
         function set.Lambda(obj, num)
-            if (isnumeric(num) && num >= 0 && num <= 1)
-                obj.Lambda = num;
+            if (isnumeric(num) && num > 0 && num <= 1)
+                obj.Lambda = double(num);
             else 
                 fprintf(['Error: expected float >= 0 and <= 1'...
                     'Received:\n']);

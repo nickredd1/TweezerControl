@@ -199,11 +199,12 @@ classdef CharacterizeElectronicsManager < GUIManager
             % Create waveform object from given data with random phases
             % such that we attempt to avoid nonliner frequency mixing and
             % interference
-            amps = lambda * double(ones(1,length(freqs)));
+            amps = double(ones(1,length(freqs)));
             phases = 2 * pi * rand(1, length(freqs));
             controls = double(ones(1, length(freqs)));
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, controls, amps, phases, t);
+            discreteWFM = Waveform(lambda, freqs, controls, amps,...
+                phases, t);
             
             % Output created Waveform object
             awg.output(discreteWFM);
@@ -247,7 +248,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             % Create waveform object from given data with random phases
             % such that we attempt to avoid nonliner frequency mixing and
             % interference
-            amps = lambda * double(ones(1,length(freqs)));
+            amps = double(ones(1,length(freqs)));
             phases = 2 * pi * rand(1, length(freqs));
             controls = double(ones(1, length(freqs)));
 %             load(['C:\Users\Endres Lab\Box Sync\EndresLab\Projects\'...
@@ -259,7 +260,8 @@ classdef CharacterizeElectronicsManager < GUIManager
 %             phases = wfm.phase;
             
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, controls, amps, phases, t);
+            discreteWFM = Waveform(lambda, freqs, controls, amps,...
+                phases, t);
             
             % Calculate theoretical power spectrum of waveform
             axes(spectrumAxes1)
@@ -280,8 +282,8 @@ classdef CharacterizeElectronicsManager < GUIManager
             % exact sampling rate of the awg
 %             [pxx,f] = periodogram(discreteWFM.Signal * ...
 %                 awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
-            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000, ...
-                NFFT))/ NFFT);
+            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000 ...
+                , NFFT))/ NFFT);
             pxx = 10*log10((abs(pxx).^2)/R * 1000);
             pxx = pxx;
             [pk, lc] = findpeaks(pxx, f, 'MinPeakHeight', -50);
@@ -362,11 +364,12 @@ classdef CharacterizeElectronicsManager < GUIManager
             end
             
             % Create waveform object from given data
-            amps = 0 * double(ones(1,length(freqs)));
+            amps = double(ones(1,length(freqs)));
             phases = double(zeros(1,length(freqs)));
             controls = double(ones(1,length(freqs)));
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, controls, amps, phases, t);
+            discreteWFM = Waveform(lambda, freqs, controls, amps,...
+                phases, t);
             
             % Calculate theoretical power spectrum of waveform
             axes(spectrumAxes1)
@@ -385,8 +388,8 @@ classdef CharacterizeElectronicsManager < GUIManager
             % exact sampling rate of the awg
 %             [pxx,f] = periodogram(discreteWFM.Signal * ...
 %                 awg.ChAmps(1) / 1000 , [], NFFT, Fs, 'power');
-            pxx =(fftshift(fft(discreteWFM.Signal * awg.ChAmps(1) / 1000, ...
-                NFFT))/ NFFT);
+            pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000 ...
+                , NFFT))/ NFFT);
             pxx = 10*log10((abs(pxx).^2)/R * 1000);
             % Plot on a log scaleWW
             plot(f, pxx)
