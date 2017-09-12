@@ -22,7 +22,7 @@ function varargout = CharacterizeElectronicsGUI(varargin)
 
 % Edit the above text to modify the response to help CharacterizeElectronicsGUI
 
-% Last Modified by GUIDE v2.5 07-Sep-2017 15:32:17
+% Last Modified by GUIDE v2.5 12-Sep-2017 12:15:01
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -137,7 +137,6 @@ function StartTweezeingButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.CharacterizeElectronics);
-
 GUIManager.startTweezing();
 guidata(hObject, handles);
 end
@@ -162,5 +161,20 @@ function MonitorPowerButton_Callback(hObject, eventdata, handles)
 GUIManager = handles.application.getManager(...
     GUIType.CharacterizeElectronics);
 GUIManager.monitorPower();
+guidata(hObject, handles);
+end
+
+
+% --- Executes during object deletion, before destroying properties.
+function CharacterizeElectronicsGUI_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to CharacterizeElectronicsGUI (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.CharacterizeElectronics);
+if (GUIManager.MonitoringPower)
+    GUIManager.monitorPower();
+end
+pause(1);
 guidata(hObject, handles);
 end

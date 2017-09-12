@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 05-Sep-2017 15:03:57
+% Last Modified by GUIDE v2.5 12-Sep-2017 11:32:55
 
 % Add application layer objects to our workspace so that we may communicate
 % through the application layer. Note that all classes from the various
@@ -140,10 +140,16 @@ function TweezersSubMenu_Callback(hObject, eventdata, handles)
 end
 
 % --------------------------------------------------------------------
-function SampleTweezerSubMenu_Callback(hObject, eventdata, handles)
-% hObject    handle to SampleTweezerSubMenu (see GCBO)
+function UniformArraySubMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to UniformArraySubMenu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% Use Application object's method for opening this specific GUI
+handles.application.openUniformArrayManager();
+
+% Save data
+guidata(hObject, handles);
 end
 
 

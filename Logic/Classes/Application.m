@@ -50,6 +50,12 @@ classdef Application < handle
             obj.Managers = [obj.Managers, newGUIManager];
         end
         
+        % Creates a UniformArrayManager object
+        function openUniformArrayManager(obj)
+            newGUIManager = UniformArrayManager(obj);
+            obj.Managers = [obj.Managers, newGUIManager];
+        end
+        
         % Begins a loop that essentially takes pictures and displays them
         % to the PictureAxis handle of the GUI object. This loop stops when
         % stopLiveView() is called by the Application object--in this

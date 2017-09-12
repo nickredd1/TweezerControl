@@ -36,10 +36,10 @@ classdef Waveform
     
     methods
         function obj = Waveform(freqs, controls, amps, phases, t)
-            obj.Freqs = freqs;
-            obj.Amps = amps;
-            obj.Phases = phases;
-            obj.Controls = controls;
+            obj.Freqs = double(freqs);
+            obj.Amps = double(amps);
+            obj.Phases = double(phases);
+            obj.Controls = double(controls);
             obj.NumFreqs = length(freqs);
             obj.NumSteps = length(t);
             
