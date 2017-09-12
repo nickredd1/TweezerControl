@@ -41,27 +41,25 @@ classdef CharacterizeElectronicsManager < GUIManager
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
             set1 = (80:10:480);
             set2 = (420:10:2500);
-            attenuation = 0;
+            attenuation = obj.Attenuation;
             pauseTime = .5;
-            numTweezers = 1;
+            numTweezers = 5;
+            numFreqs = 1;
             data1 = zeros(4, numTweezers * length(set1));
             data2 = zeros(4, numTweezers * length(set2));
                 
-            for numFreqs = 1:numTweezers
+            while numFreqs < 32
                 obj.NumTweezers = numFreqs;
                 discreteWFM = obj.tweeze();
                 
-                sa.StartFreq = (discreteWFM.Freqs(1,1) / 10^6) - .1; 
-                sa.EndFreq = (discreteWFM.Freqs(1,end) / 10^6) + .1; 
+                sa.StartFreq = (discreteWFM.Freqs(1,1) / 10^6) - .3; 
+                sa.EndFreq = (discreteWFM.Freqs(1,end) / 10^6) + .3; 
                 span = sa.EndFreq - sa.StartFreq;
                 pauseTime = .5 + .5 * floor(span);
                 for i = 1:length(set1)
                     awg.changeAmplitude(set1(1, i));
-                    power = sa.getTotalPower(sa.StartFreq, sa.EndFreq,...
+                    power = sa.getPeakPower(sa.StartFreq, sa.EndFreq,...
                         attenuation, pauseTime);
-%                     [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-%                     'MinPeakDistance', obj.FreqSep / 3,...
-%                     'MinPeakHeight', -40);
                     
                     volts = zeros(1,20);
                     for k = 1:length(volts)
@@ -77,11 +75,8 @@ classdef CharacterizeElectronicsManager < GUIManager
                 
                 for i = 1:length(set2)
                     awg.changeAmplitude(set2(1, i));
-                    power = sa.getTotalPower(sa.StartFreq, sa.EndFreq,...
+                    power = sa.getPeakPower(sa.StartFreq, sa.EndFreq,...
                         attenuation, pauseTime);
-%                     [pks, locs] = findpeaks(spec(1,:), spec(2,:),...
-%                     'MinPeakDistance', obj.FreqSep / 3,...
-%                     'MinPeakHeight', -40);
                     volts = zeros(1,20);
                     for k = 1:length(volts)
                         temp = nidaq.sampleInputs();
@@ -93,6 +88,7 @@ classdef CharacterizeElectronicsManager < GUIManager
                     data2(3,(numFreqs-1) * length(set2) + i) = set2(1, i);
                     data2(4,(numFreqs-1) * length(set2) + i) = numFreqs;
                 end
+                numFreqs = numFreqs * 2;
             end
             figure
             subplot(2,2,1) 
@@ -103,7 +99,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             
             subplot(2,2,2) 
             stem3(data1(3,:), data1(4,:), data1(2,:))
-            zlim([.5 1.1])
+            zlim([1 1.1])
             title(['RF Power (V) vs Channel Amplitude (mVp)'...
                 'for Low Gain Channel'])
             
@@ -114,7 +110,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             
             subplot(2,2,4) 
             stem3(data2(3,:), data2(4,:), data2(2,:))
-            zlim([.5 1.1])
+            zlim([1 1.1])
             title(['RF Power (V) vs Channel Amplitude (mVp)'...
                 'for High Gain Channel'])
             
@@ -205,9 +201,9 @@ classdef CharacterizeElectronicsManager < GUIManager
             % interference
             amps = lambda * double(ones(1,length(freqs)));
             phases = 2 * pi * rand(1, length(freqs));
-            
+            controls = double(ones(1, length(freqs)));
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, amps, phases, t);
+            discreteWFM = Waveform(freqs, controls, amps, phases, t);
             
             % Output created Waveform object
             awg.output(discreteWFM);
@@ -254,6 +250,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             % interference
             amps = lambda * double(ones(1,length(freqs)));
             phases = 2 * pi * rand(1, length(freqs));
+            controls = double(ones(1, length(freqs)));
 %             load(['C:\Users\Endres Lab\Box Sync\EndresLab\Projects\'...
 %                 'Optical trapping and imaging\Experiment\Scripts\'...
 %                 'createUniformTweezers\Data\uniform_waveform_51tweezers']...
@@ -263,7 +260,7 @@ classdef CharacterizeElectronicsManager < GUIManager
 %             phases = wfm.phase;
             
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, amps, phases, t);
+            discreteWFM = Waveform(freqs, controls, amps, phases, t);
             
             % Calculate theoretical power spectrum of waveform
             axes(spectrumAxes1)
@@ -272,7 +269,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             margin = 1.5 * 10^6;
             % Impedance of load, should be 50 ohms but 90 seems to fit the
             % theoretical power spectrum to the real power spectrum better
-            R = 90; 
+            R = 85; 
             leftBound = freqs(1,1) - margin;
             rightBound = freqs(1, length(freqs)) + margin;
             sa.StartFreq = leftBound / 10^6;
@@ -285,7 +282,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             pxx =(fftshift(fft(discreteWFM.Signal * obj.ChAmp / 1000, ...
                 NFFT))/ NFFT);
             pxx = 10*log10((abs(pxx).^2)/R * 1000);
-            pxx = pxx + attenuation;
+            pxx = pxx;
             [pk, lc] = findpeaks(pxx, f, 'MinPeakHeight', -50);
             % Plot on a log scaleWW
             plot(f, pxx, lc, pk, 'x')
@@ -315,7 +312,7 @@ classdef CharacterizeElectronicsManager < GUIManager
                 attenuation, pauseTime);
             axes(spectrumAxes2)
             [pk, lc] = findpeaks(spec(1,:), spec(2,:),...
-                'MinPeakHeight', -50);
+                'MinPeakHeight', -50 + attenuation);
             plot(spec(2,:), spec(1,:), lc, pk, 'x')
             text(obj.CenterFreq * 10^6 , pk(1) + 20,...
                 sprintf('Peak: %d', floor(pk(1, 1))));
@@ -366,8 +363,9 @@ classdef CharacterizeElectronicsManager < GUIManager
             % Create waveform object from given data
             amps = 0 * double(ones(1,length(freqs)));
             phases = double(zeros(1,length(freqs)));
+            controls = double(ones(1,length(freqs)));
             t = double((1:awg.NumMemSamples)/awg.SamplingRate);
-            discreteWFM = Waveform(freqs, amps, phases, t);
+            discreteWFM = Waveform(freqs, controls, amps, phases, t);
             
             % Calculate theoretical power spectrum of waveform
             axes(spectrumAxes1)
@@ -486,6 +484,17 @@ classdef CharacterizeElectronicsManager < GUIManager
                 obj.CenterFreq = num;
             else 
                 fprintf(['Error: expected integer >= 50 and <= 110'...
+                    'Received:\n']);
+                disp(num)
+            end
+        end
+        
+        % Setter function for center frequency of awg
+        function set.Lambda(obj, num)
+            if (isnumeric(num) && num >= 0 && num <= 1)
+                obj.Lambda = num;
+            else 
+                fprintf(['Error: expected float >= 0 and <= 1'...
                     'Received:\n']);
                 disp(num)
             end

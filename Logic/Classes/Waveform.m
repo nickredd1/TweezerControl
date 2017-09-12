@@ -25,24 +25,31 @@ classdef Waveform
         % Array of phases of frequencies
         Phases
         
+        % Array of binary (0 or 1) scalars that control the on/off state of
+        % each fundamental frequency
+        Controls
+        
         % Discretized signal calculated during the construction of a
         % waveform object
         Signal
     end
     
     methods
-        function obj = Waveform(freqs, amps, phases, t)
+        function obj = Waveform(freqs, controls, amps, phases, t)
             obj.Freqs = freqs;
             obj.Amps = amps;
             obj.Phases = phases;
+            obj.Controls = controls;
             obj.NumFreqs = length(freqs);
             obj.NumSteps = length(t);
             
              % Make sure freqs, amps, and phases are all arrays of equal
             % length
             if ~((obj.NumFreqs == length(amps)) ...
-                    && (obj.NumFreqs == length(phases)))
-                fprintf(['Error: expected Freqs, Amps, and Phases to '...
+                    && (obj.NumFreqs == length(phases)) &&...
+                    obj.NumFreqs == length(controls))
+                fprintf(['Error: expected Freqs, Amps, Controls, and'...
+                    'Phases to '...
                     'be equal length arrays.\n'])
                 return;
             end
@@ -52,15 +59,26 @@ classdef Waveform
             signals = zeros(obj.NumFreqs, obj.NumSteps);
             
             for i = 1:obj.NumFreqs
-                signals(i,1:obj.NumSteps) = ...
-                    amps(1, i)*sin(2*pi*freqs(1, i)*t + phases(1, i));
+                signals(i,1:obj.NumSteps) = controls(1, i)...
+                    * amps(1, i)*sin(2*pi*freqs(1, i)*t + phases(1, i));
+            end
+            
+            % Calculate the square root of the sum of the magnitude squared
+            % for the array of amplitudes provided
+            sumAmps = 0.0;
+            for i = 1:length(amps)
+                sumAmps = sumAmps + abs(amps(1, i))^2;
             end
             
             % Scale waveform such that each frequency component contributes
-            % equally to the aplitude of the composite waveform
+            % equally to the amplitude of the composite waveform. In this
+            % case we take into account the sum of the amplitudes and the
+            % number of frequency components
             if (size(signals, 1) > 1)
-                signals = sum(signals)/obj.NumFreqs;
+                signals = sum(signals);
             end
+            signals = signals/(sqrt(obj.NumFreqs) * sqrt(sumAmps));
+            
             obj.Signal = signals;
         end
         
