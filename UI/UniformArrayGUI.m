@@ -22,7 +22,7 @@ function varargout = UniformArrayGUI(varargin)
 
 % Edit the above text to modify the response to help UniformArrayGUI
 
-% Last Modified by GUIDE v2.5 12-Sep-2017 12:13:52
+% Last Modified by GUIDE v2.5 12-Sep-2017 14:47:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -102,16 +102,6 @@ GUIManager.stopTweezing();
 guidata(hObject, handles);
 end
 
-% --- Executes on button press in MonitorPowerButton.
-function MonitorPowerButton_Callback(hObject, eventdata, handles)
-% hObject    handle to MonitorPowerButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-GUIManager = handles.application.getManager(...
-    GUIType.UniformArray);
-GUIManager.monitorPower();
-guidata(hObject, handles);
-end
 
 % --- Executes when entered data in editable cell(s) in PropertyValueTable.
 function PropertyValueTable_CellEditCallback(hObject, eventdata, handles)
@@ -151,15 +141,66 @@ end
 
 
 % --- Executes during object deletion, before destroying properties.
-function figure1_DeleteFcn(hObject, eventdata, handles)
-% hObject    handle to figure1 (see GCBO)
+function UniformArrayGUI_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to UniformArrayGUI (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.UniformArray);
-if (GUIManager.MonitoringPower)
-    GUIManager.monitorPower();
-end
-pause(1)
 guidata(hObject, handles);
+end
+
+
+% --- Executes on button press in FilePathButton.
+function FilePathButton_Callback(hObject, eventdata, handles)
+% hObject    handle to FilePathButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+dir = uigetdir;
+GUIManager = handles.application.getManager(...
+    GUIType.UniformArray);
+GUIManager.FilePath = dir;
+set(handles.FilePathText, 'String', ['File Path: ', dir]);
+end
+
+
+% --- Executes on button press in MonitorPowerButton.
+function MonitorPowerButton_Callback(hObject, eventdata, handles)
+% hObject    handle to MonitorPowerButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.UniformArray);
+GUIManager.monitorPower();
+end
+
+% --- Executes on button press in UniformizeButton.
+function UniformizeButton_Callback(hObject, eventdata, handles)
+% hObject    handle to UniformizeButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.UniformArray);
+GUIManager.uniformize();
+end
+
+
+% --- Executes on button press in DefineROIButton.
+function DefineROIButton_Callback(hObject, eventdata, handles)
+% hObject    handle to DefineROIButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.UniformArray);
+GUIManager.defineROI();
+end
+
+% --- Executes on button press in ResetROIButton.
+function ResetROIButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ResetROIButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+GUIManager = handles.application.getManager(...
+    GUIType.UniformArray);
+GUIManager.resetROI();
 end

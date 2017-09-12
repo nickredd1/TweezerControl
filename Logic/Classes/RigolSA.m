@@ -111,6 +111,7 @@ classdef RigolSA < Device
                 num2str(obj.StartFreq), obj.Units]);
             fprintf(obj.VISAUSB, [':sens:freq:stop ', ...
                 num2str(obj.EndFreq), obj.Units]);
+            
             pause(pauseTime);
             % Read data (in ASCII)
             fprintf(obj.VISAUSB, ':trac:data? trace1' );

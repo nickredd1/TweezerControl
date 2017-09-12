@@ -15,13 +15,15 @@ classdef UniformArrayManager < GUIManager
         
         Lambda
         
-        MonitoringPower
-        
         PreAmpPowerData
         
         PostAmpPowerData
         
         Attenuation
+        
+        FilePath
+        
+        MonitoringPower
     end
     
     
@@ -30,11 +32,12 @@ classdef UniformArrayManager < GUIManager
             obj = obj@GUIManager(application);
             obj.GUI = UniformArrayGUI;
             obj.Handles = obj.GUI.Children;
-            obj.Handles
-            obj.MonitoringPower = false;
-            
             obj.PreAmpPowerData = zeros(1, 500);
             obj.PostAmpPowerData = zeros(1, 500);
+            obj.MonitoringPower = false;
+%             dir = uigetdir;
+%             GUIManager.FilePath = dir;
+%             set(obj.Handles(1), 'String', ['File Path: ', dir]);
         end
         
         function discreteWFM = tweeze(obj)
@@ -87,9 +90,10 @@ classdef UniformArrayManager < GUIManager
             % Attenuation from various RF components in system
             attenuation = obj.Attenuation;
             % Get plot axes handles
-            periodHandle = handles(9);
-            spectrumAxes1 = handles(10);
-            spectrumAxes2 = handles(8);
+            periodHandle = handles(14);
+            spectrumAxes1 = handles(15);
+            spectrumAxes2 = handles(13);
+            pictureAxes = handles(10);
             
             % Setup awg
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
@@ -100,6 +104,9 @@ classdef UniformArrayManager < GUIManager
             
             % Setup spectrum analyzer
             sa = obj.Application.getDevice(DeviceType.RigolSA, 0);
+            
+            % Setup camera
+            cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
             
             % Condition on number of tweezers
             if (numTweezers == 1)
@@ -140,7 +147,7 @@ classdef UniformArrayManager < GUIManager
             rightBound = freqs(1, length(freqs)) + margin;
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
-            pauseTime = .5 + floor(sa.StartFreq - sa.EndFreq) * .5;
+            pauseTime = 3 + floor(sa.EndFreq - sa.StartFreq) * .1;
             
             f = Fs/2*[-1:2/NFFT:1-2/NFFT];
             % Take what is essentially a DFFT, making sure to give it the
@@ -180,7 +187,7 @@ classdef UniformArrayManager < GUIManager
                 attenuation, pauseTime);
             axes(spectrumAxes2)
             [pk, lc] = findpeaks(spec(1,:), spec(2,:),...
-                'MinPeakHeight', -50 + attenuation);
+                'MinPeakHeight', -50 + attenuation/3);
             plot(spec(2,:), spec(1,:), lc, pk, 'x')
             text(obj.CenterFreq * 10^6 , pk(1) + 20,...
                 sprintf('Peak: %d', floor(pk(1, 1))));
@@ -190,6 +197,12 @@ classdef UniformArrayManager < GUIManager
             title('Real Power Spectrum')
             xlabel('Frequency (Hz)')
             ylabel('Power (dBm)')
+            
+            % Take sample image from basler to show tweezers
+            axes(pictureAxes)
+            [success, image, timestamp] = cam.capture();
+            imshow(image)
+            title('Tweezer Image')
         end
         
         function stopTweezing(obj)
@@ -204,9 +217,10 @@ classdef UniformArrayManager < GUIManager
             
             %attenuation 
             % Get plot axes handles
-            periodHandle = handles(9);
-            spectrumAxes1 = handles(10);
-            spectrumAxes2 = handles(8);
+            periodHandle = handles(14);
+            spectrumAxes1 = handles(15);
+            spectrumAxes2 = handles(13);
+            pictureAxes = handles(10);
             
             % Setup awg
             awg = obj.Application.getDevice(DeviceType.SpectrumAWG, 0);
@@ -217,6 +231,9 @@ classdef UniformArrayManager < GUIManager
             
             % Setup spectrum analyzer
             sa = obj.Application.getDevice(DeviceType.RigolSA, 0);
+            
+            % Setup basler
+            cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
             
             % Condition on number of tweezers
             if (numTweezers == 1)
@@ -241,11 +258,12 @@ classdef UniformArrayManager < GUIManager
             Fs = awg.SamplingRate;
             margin = 1.5 * 10^6;
             % Impedance of load
-            R = 50; 
+            R = 85; 
             leftBound = freqs(1,1) - margin;
             rightBound = freqs(1, length(freqs)) + margin;
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
+            pauseTime = 3 + floor(sa.EndFreq - sa.StartFreq) * .1;
             f = Fs/2*[-1:2/NFFT:1-2/NFFT];
             % Take what is essentially a DFFT, making sure to give it the
             % exact sampling rate of the awg
@@ -258,52 +276,99 @@ classdef UniformArrayManager < GUIManager
             plot(f, pxx)
             axis([leftBound, rightBound, -100, 40])
             title('Theoretical Power Spectrum')
+            xlabel('Frequency (Hz)')
+            ylabel('Power (dBm)')
             pause(1)
             
             % Plot waveform
             axes(periodHandle)
             plot(t,  discreteWFM.Signal);
             title('Waveform Period')
+            xlabel('Time (S)')
+            ylabel('Amplitude')
             
             % Stop output of AWG
             awg.output(discreteWFM);
             
             % Get and plot power spectrum
             spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq,...
-                attenuation, 5);
+                attenuation, pauseTime);
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
             axis([leftBound, rightBound, -100, 40])
             title('Real Power Spectrum')
+            xlabel('Frequency (Hz)')
+            ylabel('Power (dBm)')
+            
+            % Take sample image from basler to show tweezers
+            axes(pictureAxes)
+            [success, image, timestamp] = cam.capture();
+            imshow(image)
+            title('Tweezer Image')
         end
         
         function monitorPower(obj)
             if (~obj.MonitoringPower)
                 obj.MonitoringPower = true;
                 nidaq = obj.Application.getDevice(DeviceType.NIDAQ, 0);
-                set1Plot = obj.Handles(7);
-                set2Plot = obj.Handles(6);
-                
+                set1Plot = obj.Handles(12);
+                set2Plot = obj.Handles(11);
                 while(obj.MonitoringPower)
-                    voltages = nidaq.sampleInputs();
-                    obj.PreAmpPowerData = circshift(...
-                        obj.PreAmpPowerData, -1, 2);
-                    obj.PostAmpPowerData = circshift(...
-                        obj.PostAmpPowerData, -1, 2);
-                    obj.PreAmpPowerData(1, end) = voltages(1, 1);
-                    obj.PostAmpPowerData(1, end) = voltages(1, 2);
-                    
-                    pause(.1)
-                    axes(set1Plot)
-                    plot(obj.PreAmpPowerData(1,:))
-                    title('Pre Amp Power')
-                    axes(set2Plot)
-                    plot(obj.PostAmpPowerData(1,:))
-                    title('Post Amp Power')
+                        voltages = nidaq.sampleInputs();
+                        obj.PreAmpPowerData = circshift(...
+                            obj.PreAmpPowerData, -1, 2);
+                        obj.PostAmpPowerData = circshift(...
+                            obj.PostAmpPowerData, -1, 2);
+                        obj.PreAmpPowerData(1, end) = voltages(1, 1);
+                        obj.PostAmpPowerData(1, end) = voltages(1, 2);
+
+                        pause(.1)
+                        axes(set1Plot)
+                        plot(obj.PreAmpPowerData(1,:))
+                        title('Pre Amp Power')
+                        axes(set2Plot)
+                        plot(obj.PostAmpPowerData(1,:))
+                        title('Post Amp Power')
                 end
             else
                 obj.MonitoringPower = false;
+                return;
             end
+        end
+        
+        function defineROI(obj)
+            pictureAxes = obj.Handles(10);
+            axes(pictureAxes)
+            rect = getrect;
+            rect = uint32(rect);
+            cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
+            if(isa(cam, 'Device'))
+                cam.Width = rect(3);
+                cam.Height = rect(4);
+                cam.OffsetX = rect(1);
+                cam.OffsetY = rect(2);
+            end
+            
+            % Take sample image from basler to show tweezers
+            axes(pictureAxes)
+            [success, image, timestamp] = cam.capture();
+            imshow(image)
+            title('Tweezer Image')
+        end
+        
+        function resetROI(obj)
+            pictureAxes = obj.Handles(10);
+            axes(pictureAxes)
+            cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
+            if(isa(cam, 'Device'))
+                cam.resetSensor();
+            end
+            
+            % Take sample image from basler to show tweezers
+            axes(pictureAxes)
+            [success, image, timestamp] = cam.capture();
+            imshow(image)
+            title('Tweezer Image')
         end
     end
     

@@ -191,7 +191,7 @@ classdef Application < handle
             
             % Attempt to discover Basler Camera 1 with the defined serial
             % numbers provided
-            %obj.addDevice(DeviceType.BaslerCamera, serials);
+            obj.addDevice(DeviceType.BaslerCamera, serials);
             
             obj.addDevice(DeviceType.RigolSA, '');
             obj.addDevice(DeviceType.NIDAQ, '');

@@ -273,7 +273,7 @@ classdef CharacterizeElectronicsManager < GUIManager
             rightBound = freqs(1, length(freqs)) + margin;
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
-            pauseTime = .5 + floor(sa.EndFreq - sa.StartFreq) * .25;
+            pauseTime = 3 + floor(sa.EndFreq - sa.StartFreq) * .1;
             
             f = Fs/2*[-1:2/NFFT:1-2/NFFT];
             % Take what is essentially a DFFT, making sure to give it the
@@ -313,7 +313,7 @@ classdef CharacterizeElectronicsManager < GUIManager
                 attenuation, pauseTime);
             axes(spectrumAxes2)
             [pk, lc] = findpeaks(spec(1,:), spec(2,:),...
-                'MinPeakHeight', -50);
+                'MinPeakHeight', -50 + attenuation/3);
             plot(spec(2,:), spec(1,:), lc, pk, 'x')
             text(obj.CenterFreq * 10^6 , pk(1) + 20,...
                 sprintf('Peak: %d', floor(pk(1, 1))));
@@ -374,12 +374,13 @@ classdef CharacterizeElectronicsManager < GUIManager
             Fs = awg.SamplingRate;
             margin = 1.5 * 10^6;
             % Impedance of load
-            R = 50; 
+            R = 85; 
             leftBound = freqs(1,1) - margin;
             rightBound = freqs(1, length(freqs)) + margin;
             sa.StartFreq = leftBound / 10^6;
             sa.EndFreq = rightBound / 10^6;
             f = Fs/2*[-1:2/NFFT:1-2/NFFT];
+            pauseTime = 3 + floor(sa.EndFreq - sa.StartFreq) * .1;
             % Take what is essentially a DFFT, making sure to give it the
             % exact sampling rate of the awg
 %             [pxx,f] = periodogram(discreteWFM.Signal * ...
@@ -391,23 +392,29 @@ classdef CharacterizeElectronicsManager < GUIManager
             plot(f, pxx)
             axis([leftBound, rightBound, -100, 40])
             title('Theoretical Power Spectrum')
+            xlabel('Frequency (Hz)')
+            ylabel('Power (dBm)')
             pause(1)
             
             % Plot waveform
             axes(periodHandle)
             plot(t,  discreteWFM.Signal);
             title('Waveform Period')
+            xlabel('Time (S)')
+            ylabel('Amplitude')
             
             % Stop output of AWG
             awg.output(discreteWFM);
             
             % Get and plot power spectrum
             spec = sa.getPowerSpectrum(sa.StartFreq, sa.EndFreq,...
-                attenuation, 5);
+                attenuation, pauseTime);
             axes(spectrumAxes2)
             plot(spec(2,:), spec(1,:))
             axis([leftBound, rightBound, -100, 40])
             title('Real Power Spectrum')
+            xlabel('Frequency (Hz)')
+            ylabel('Power (dBm)')
         end
         
         function monitorPower(obj)
@@ -416,7 +423,6 @@ classdef CharacterizeElectronicsManager < GUIManager
                 nidaq = obj.Application.getDevice(DeviceType.NIDAQ, 0);
                 set1Plot = obj.Handles(8);
                 set2Plot = obj.Handles(7);
-                
                 while(obj.MonitoringPower)
                     voltages = nidaq.sampleInputs();
                     obj.PreAmpPowerData = circshift(...
@@ -425,7 +431,7 @@ classdef CharacterizeElectronicsManager < GUIManager
                         obj.PostAmpPowerData, -1, 2);
                     obj.PreAmpPowerData(1, end) = voltages(1, 1);
                     obj.PostAmpPowerData(1, end) = voltages(1, 2);
-                    
+
                     pause(.1)
                     axes(set1Plot)
                     plot(obj.PreAmpPowerData(1,:))

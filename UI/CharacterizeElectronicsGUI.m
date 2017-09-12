@@ -22,7 +22,7 @@ function varargout = CharacterizeElectronicsGUI(varargin)
 
 % Edit the above text to modify the response to help CharacterizeElectronicsGUI
 
-% Last Modified by GUIDE v2.5 12-Sep-2017 12:15:01
+% Last Modified by GUIDE v2.5 12-Sep-2017 13:18:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -175,6 +175,5 @@ GUIManager = handles.application.getManager(...
 if (GUIManager.MonitoringPower)
     GUIManager.monitorPower();
 end
-pause(1);
 guidata(hObject, handles);
 end
