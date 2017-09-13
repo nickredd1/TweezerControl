@@ -33,6 +33,10 @@ classdef UniformArrayManager < GUIManager
         
         PictureAxes2
         
+        PictureAxes1Image
+        
+        PictureAxes2Image
+        
         LastTimestamp
     end
     
@@ -46,9 +50,6 @@ classdef UniformArrayManager < GUIManager
             obj.PostAmpPowerData = zeros(1, 500);
             obj.MonitoringPower = false;
             obj.LastTimestamp = 0;
-%             dir = uigetdir;
-%             GUIManager.FilePath = dir;
-%             set(obj.Handles(1), 'String', ['File Path: ', dir]);
         end
         
         function discreteWFM = tweeze(obj)
@@ -114,27 +115,18 @@ classdef UniformArrayManager < GUIManager
             % Take sample image from basler to show tweezers
             if (ishandle(obj.ImageFigure))
                 figure(obj.ImageFigure);
-%                 axes(obj.PictureAxes1)
-%                 [success, image, timestamp] = cam.capture();
-%                 imshow(image)
-%                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
-                
-                axes(obj.PictureAxes2)
                 [success, image, timestamp] = cam.capture();
                 obj.LastTimestamp = timestamp;
-                imshow(image)
+                set(obj.PictureAxes2Image, 'CData', image);
                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
             else 
             	obj.ImageFigure = figure('Name', 'Images');
-%                 obj.PictureAxes1 = axes('Position', [0,.55, 1, .4])
-%                 [success, image, timestamp] = cam.capture();
-%                 imshow(image)
-%                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
                 
                 obj.PictureAxes2 = axes('Position', [0,.05, 1, .9]);
                 [success, image, timestamp] = cam.capture();
                 obj.LastTimestamp = timestamp;
-                imshow(image)
+                obj.PictureAxes2Image = ...
+                    imshow(image, 'Parent', obj.PictureAxes2);
                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
             end
             
@@ -222,23 +214,23 @@ classdef UniformArrayManager < GUIManager
             cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
             
             
-            % Take sample image from basler to show tweezers
+           % Take sample image from basler to show tweezers
             if (ishandle(obj.ImageFigure))
                 figure(obj.ImageFigure);
-                
-                axes(obj.PictureAxes2)
                 [success, image, timestamp] = cam.capture();
-                imshow(image)
+                obj.LastTimestamp = timestamp;
+                set(obj.PictureAxes2Image, 'CData', image);
                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
             else 
             	obj.ImageFigure = figure('Name', 'Images');
                 
                 obj.PictureAxes2 = axes('Position', [0,.05, 1, .9]);
                 [success, image, timestamp] = cam.capture();
-                imshow(image)
+                obj.LastTimestamp = timestamp;
+                obj.PictureAxes2Image = ...
+                    imshow(image, 'Parent', obj.PictureAxes2);
                 title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
             end
-            
             
             
             % Calculate theoretical power spectrum of waveform
@@ -315,7 +307,6 @@ classdef UniformArrayManager < GUIManager
                 nidaq = obj.Application.getDevice(DeviceType.NIDAQ, 0);
                 set1Plot = obj.Handles(11);
                 set2Plot = obj.Handles(10);
-                pictureAxes = obj.PictureAxes2;
                 cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
                 while(obj.MonitoringPower)
                         voltages = nidaq.sampleInputs();
@@ -330,15 +321,16 @@ classdef UniformArrayManager < GUIManager
                         plot(obj.PostAmpPowerData(1,:), 'Parent', set2Plot)
                         title('Post Amp Power', 'Parent', set2Plot)
                         
-                        if (ishandle(pictureAxes))
+                        if (ishandle(obj.PictureAxes2))
                             % Take sample image from basler to show tweezers
                             [success, image, timestamp] = cam.capture();
                             if (success)
-                                framerate = 1/(timestamp - obj.LastTimestamp);
-                                imshow(image, 'Parent', pictureAxes)
+                                framerate = 1/...
+                                    (timestamp - obj.LastTimestamp);
+                                set(obj.PictureAxes2Image, 'CData', image);
                                 title(sprintf(['Tweezer Image (Basler #%d, '...
-                                    'FPS: %0.1f)'], cam.Index, framerate),...
-                                    'Parent', pictureAxes)
+                                    'FPS: %0.2f)'], cam.Index, framerate),...
+                                    'Parent', obj.PictureAxes2)
                                 obj.LastTimestamp = timestamp;
                             end
                         end

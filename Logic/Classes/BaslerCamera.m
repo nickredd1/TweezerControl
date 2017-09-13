@@ -175,7 +175,9 @@ classdef BaslerCamera < Device
                 % Initialize acquisition so that there is no latency when
                 % we need to spontaenously grab frames. We use
                 % GrabStrategy=2 and GrabLoop=1
-                 obj.CameraHandle.StreamGrabber.Start();
+                 obj.CameraHandle.StreamGrabber.Start(...
+                     Basler.Pylon.GrabStrategy.LatestImages, ...
+                     Basler.Pylon.GrabLoop.ProvidedByUser);
                 
             catch ME
                 % Display error message
