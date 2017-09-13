@@ -115,15 +115,36 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'ShutterMode').SetValue('Rolling');
                 
+                % Set Acqusition Mode to Single Frame
+                obj.CameraHandle.Parameters.Item(...
+                    'AcquisitionMode').SetValue('Continuous');
+                
+                % Select FrameBurstStart trigger and disable it
+                obj.CameraHandle.Parameters.Item(...
+                    'TriggerSelector').SetValue('FrameBurstStart');
+                obj.CameraHandle.Parameters.Item(...
+                    'TriggerMode').SetValue('Off');
+                
+                % Disable frame rate parameter
+                obj.CameraHandle.Parameters.Item(...
+                    'AcquisitionFrameRateEnable').SetValue(false);
+                
+                % Select FrameBurstStart trigger and disable it
+                obj.CameraHandle.Parameters.Item(...
+                    'TriggerSelector').SetValue('FrameStart');
+                obj.CameraHandle.Parameters.Item(...
+                    'TriggerMode').SetValue('On');
+                
+                % Set trigger mode to software for higher framerates while
+                % grabbing images
+                obj.CameraHandle.Parameters.Item(...
+                    'TriggerSource').SetValue('Software');
+                
                 % Set ExposureMode to timed so we can define our own
                 % exposure times
                 obj.CameraHandle.Parameters.Item(...
                     'ExposureMode').SetValue('Timed');
                  
-                % Set trigger mode to software for higher framerates while
-                % grabbing images
-                obj.CameraHandle.Parameters.Item(...
-                    'TriggerSource').SetValue('Software');
                 
                 % Set GainAuto to off so that we may set gain manually
                 obj.CameraHandle.Parameters.Item(...
@@ -139,6 +160,11 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'ChunkEnable').SetValue(true);
                 
+                % Initialize acquisition so that there is no latency when
+                % we need to spontaenously grab frames.
+                obj.CameraHandle.Parameters.Item(...
+                    'AcquisitionStart').Execute();
+                
                 % Reset sensor parameters
                 obj.resetSensor();
                 
@@ -147,8 +173,9 @@ classdef BaslerCamera < Device
                 obj.Initialized = true;
                 
                 % Initialize acquisition so that there is no latency when
-                % we need to spontaenously grab frames
-                obj.CameraHandle.StreamGrabber.Start();
+                % we need to spontaenously grab frames. We use
+                % GrabStrategy=2 and GrabLoop=1
+                 obj.CameraHandle.StreamGrabber.Start();
                 
             catch ME
                 % Display error message
@@ -178,7 +205,7 @@ classdef BaslerCamera < Device
             obj.OffsetY = obj.MinOffsetY + 1;
             
             obj.Gain = 1;
-            obj.ExposureTime = 10^5; % 1 ms (units of microseconds!)
+            obj.ExposureTime = 10^3; % 1 ms (units of microseconds!)
             % Set Pixel format to 8bit mono (FOR 12BIT MONO: use 'Mono12'
            obj.PixelFormat = 'Mono8';
         end
@@ -193,50 +220,62 @@ classdef BaslerCamera < Device
                 % 500 miliseconds. Additionally, make sure that we don't
                 % lose any precision from obj.ExposureTime being (most
                 % likely) an integer
-                timeout=int32(double(obj.ExposureTime)/10^3 + 5000.0); 
-                % Grab result of camera
-                grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
+                timeout=int32(obj.ExposureTime /10^3 + 500.0); 
+                if (obj.CameraHandle.WaitForFrameTriggerReady(...
+                    timeout, Basler.Pylon.TimeoutHandling.ThrowException))
+                    % Execute software trigger
+                    obj.CameraHandle.ExecuteSoftwareTrigger();
+                    framerate = obj.CameraHandle.Parameters.Item(...
+                    'ResultingFrameRate').GetValue();
+                    
+                    % Grab result of camera
+                    grabResult=obj.CameraHandle.StreamGrabber.RetrieveResult(...
                     timeout, Basler.Pylon.TimeoutHandling.ThrowException);
-                % Make sure grab succeeded
-                if (grabResult.GrabSucceeded)
-                    numCols = obj.Width;
-                
-                    switch obj.PixelFormat
-                        case 'Mono8'
-                            % Convert pixel buffer data to uint8 image
-                             image = vec2mat(uint8(...
-                                 grabResult.PixelData), double(numCols));
-                        case 'Mono12'
-                            image = vec2mat(uint16(...
-                                grabResult.PixelData), double(numCols));
-                        case 'Mono12p'
-                            image = vec2mat(uint16(...
-                                grabResult.PixelData), double(numCols));
-                        otherwise
-                            fprintf(['Error: PixelFormat not recognized.'...
-                                ' Receieved:\n']);
-                            disp(obj.PixelFormat)
-                    end
                     
-                    % Get timestamp in units of ticks, where each tick is
-                    % equivalent to 1 ns. Thus, we must scale this such that it
-                    % is in seconds. The timestamp is measured relative to the
-                    % time at which the camera turned on, so the timestamp is
-                    % basically the camera on-time until the specific image was
-                    % taken
-                    timestamp = double(grabResult.Timestamp) / 10^9;
+                    % Make sure grab succeeded
+                    if (grabResult.GrabSucceeded)
+                        numCols = obj.Width;
 
-                    % Return success
-                    success = true;
-                    
-                    % Dispose result when completed so that the buffer is
-                    % emptied
-                    grabResult.Dispose();
-                else
-                    success = false;
-                    image = [];
-                    timestamp = 0;
-                    fprintf('Error: Grab failed \n');
+                        switch obj.PixelFormat
+                            case 'Mono8'
+                                % Convert pixel buffer data to uint8 image
+                                 image = vec2mat(uint8(...
+                                     grabResult.PixelData), double(numCols));
+                            case 'Mono12'
+                                image = vec2mat(uint16(...
+                                    grabResult.PixelData), double(numCols));
+                            case 'Mono12p'
+                                image = vec2mat(uint16(...
+                                    grabResult.PixelData), double(numCols));
+                            otherwise
+                                fprintf(['Error: PixelFormat not recognized.'...
+                                    ' Receieved:\n']);
+                                disp(obj.PixelFormat)
+                        end
+
+                        % Get timestamp in units of ticks, where each tick is
+                        % equivalent to 1 ns. Thus, we must scale this such that it
+                        % is in seconds. The timestamp is measured relative to the
+                        % time at which the camera turned on, so the timestamp is
+                        % basically the camera on-time until the specific image was
+                        % taken
+                        timestamp = double(grabResult.Timestamp) / 10^9;
+
+                        % Return success
+                        success = true;
+
+                        % Dispose result when completed so that the buffer is
+                        % emptied
+                        grabResult.Dispose();
+                        
+                        % Give camera time to breath
+                        pause(1/framerate)
+                    else
+                        success = false;
+                        image = [];
+                        timestamp = 0;
+                        fprintf('Error: Grab failed \n');
+                    end
                 end
             else
                 success = false;
@@ -257,6 +296,10 @@ classdef BaslerCamera < Device
             % Stop streamgrabber so that we may shutdown
             obj.CameraHandle.StreamGrabber.Stop();
             
+            % Stop acquisition
+            obj.CameraHandle.Parameters.Item(...
+                    'AcquisitionStart').Execute();
+                
             % Release resources
             obj.CameraHandle.Dispose();
             % Delete BaslerCamera so that we can open it up again

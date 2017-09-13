@@ -22,7 +22,7 @@ function varargout = UniformArrayGUI(varargin)
 
 % Edit the above text to modify the response to help UniformArrayGUI
 
-% Last Modified by GUIDE v2.5 12-Sep-2017 15:46:06
+% Last Modified by GUIDE v2.5 13-Sep-2017 10:41:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -118,23 +118,26 @@ GUIManager = handles.application.getManager(...
 switch eventdata.Indices(1)
     case 1
         num = str2double(eventdata.EditData);
-        
         GUIManager.NumTweezers = num;
-    case 2
+    case 2 
         num = str2double(eventdata.EditData);
-        GUIManager.ChAmp = num;
+        GUIManager.NumActiveTweezers = num;
     case 3
         num = str2double(eventdata.EditData);
-        GUIManager.FreqSep = num;
+        GUIManager.ChAmp = num;
     case 4
         num = str2double(eventdata.EditData);
-        GUIManager.CenterFreq = num;
+        GUIManager.FreqSep = num;
     case 5
         num = str2double(eventdata.EditData);
-        GUIManager.Lambda = num;
+        GUIManager.CenterFreq = num;
     case 6
         num = str2double(eventdata.EditData);
+        GUIManager.Lambda = num;
+    case 7
+        num = str2double(eventdata.EditData);
         GUIManager.Attenuation = num;
+        
 end
 guidata(hObject, handles);
 end
@@ -147,6 +150,9 @@ function UniformArrayGUI_DeleteFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.UniformArray);
+if (ishandle(GUIManager.ImageFigure))
+    close(GUIManager.ImageFigure)
+end
 guidata(hObject, handles);
 end
 
@@ -164,14 +170,14 @@ set(handles.FilePathText, 'String', ['File Path: ', dir]);
 end
 
 
-% --- Executes on button press in MonitorPowerButton.
-function MonitorPowerButton_Callback(hObject, eventdata, handles)
-% hObject    handle to MonitorPowerButton (see GCBO)
+% --- Executes on button press in MonitorButton.
+function MonitorButton_Callback(hObject, eventdata, handles)
+% hObject    handle to MonitorButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.UniformArray);
-GUIManager.monitorPower();
+GUIManager.monitor();
 end
 
 % --- Executes on button press in UniformizeButton.
@@ -181,7 +187,7 @@ function UniformizeButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.UniformArray);
-GUIManager.uniformize();
+%GUIManager.uniformize();
 end
 
 

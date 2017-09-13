@@ -36,6 +36,9 @@ classdef Waveform
         % Discretized signal calculated during the construction of a
         % waveform object
         Signal
+        
+        % Array of timesteps provided to the Waveform object
+        TimeSteps
     end
     
     methods
@@ -44,6 +47,7 @@ classdef Waveform
             obj.Amps = double(amps);
             obj.Phases = double(phases);
             obj.Controls = double(controls);
+            obj.TimeSteps = double(t);
             obj.NumFreqs = length(freqs);
             obj.NumSteps = length(t);
             
@@ -143,7 +147,7 @@ classdef Waveform
             end
         end
         
-         % Helper function for setting phases of Waveform object
+        % Helper function for setting phases of Waveform object
         function obj = set.Phases(obj, phases)
             if (isnumeric(phases) && ~isempty(phases))
                 % Make sure we have double array
@@ -157,7 +161,19 @@ classdef Waveform
             end
         end
         
+        % Helper function for setting TimeSteps of Waveform object
+        function obj = set.TimeSteps(obj, t)
+            if (isnumeric(t) && ~isempty(t))
+                % Make sure we have double array
+                obj.TimeSteps = double(t);
+            else 
+                fprintf(['Error: expected numeric array of times '...
+                    'for Time Steps.\n' ...
+                    'Received:'])
+                disp(t)
+                return;
+            end
+        end
     end
-    
 end
 
