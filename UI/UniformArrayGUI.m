@@ -153,6 +153,7 @@ GUIManager = handles.application.getManager(...
 if (GUIManager.MonitoringPower)
     GUIManager.monitor();
 end
+pause(1)
 if (ishandle(GUIManager.ImageFigure))
     close(GUIManager.ImageFigure)
 end

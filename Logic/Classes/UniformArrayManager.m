@@ -3,47 +3,85 @@ classdef UniformArrayManager < GUIManager
     %   Detailed explanation goes here
     
     properties
+        % Set GUIType so we may reference the GUIManager using our
+        % Application object
         Type = GUIType.UniformArray;
         
+        % Number of tweezers defined by user
         NumTweezers
         
+        % Number of active tweezers defined by user (sets the controls
+        % argument of the Waveform object created)
         NumActiveTweezers
         
+        % Sets the max amplitude for the channels of the AWG
         ChAmp
         
+        % Frequency separation of tweezers in KHz
         FreqSep
         
+        % Center frequency of tweezers in MHz
         CenterFreq
         
+        % Scalar value for scaling the ampltidue of the waveforms created
         Lambda
         
+        % Array of power meter data before the amplifier, which we need in
+        % order to show the time varying power
         PreAmpPowerData
         
+        % Array of power meter data after the amplifier, which we need in
+        % order to show the time varying power
         PostAmpPowerData
         
+        % Attenuation from the AWG to the Spectrum Analyzer--should be
+        % calculated from any RF components provided Gain/attenuation in
+        % our RF lines
         Attenuation
         
+        % File path to save any images/waveforms to
         FilePath
         
+        % Boolean variable representing whether or not we are actively
+        % monitoring camera/DAC data and outputting in on plots to the
+        % screen
         Monitor
         
+        % Figure for plotting locations of tweezers while uniformizing
         PlotFigure
         
+        % Figure for displaying camera images
         ImageFigure
         
+        % Axes 1 for displaying a single camera's output, is a child of
+        % ImageFigure
         PictureAxes1
         
+        % Axes 2 for displaying a single camera's output, is a child of
+        % ImageFigure
         PictureAxes2
         
+        % Image handle for images displayed in PictureAxes1
         PictureAxes1Image
         
+        % Image handle for images displayed in PictureAxes2
         PictureAxes2Image
         
+        % Axes 1 for plotting tweezer coordinates gathered from camera
+        % corresponding to PictureAxes1
         PlotAxes1
         
+        % Axes 2 for plotting tweezer coordinates gathered from camera
+        % corresponding to PictureAxes1
         PlotAxes2
         
-        LastTimestamp
+        % Last timestamp for 1st camera, allows us to calculate FPS on the
+        % fly
+        LastTimestamp1
+        
+        % Last timestamp for 2nd camera, allows us to calculate FPS on the
+        % fly
+        LastTimestamp2
     end
     
     
@@ -55,9 +93,11 @@ classdef UniformArrayManager < GUIManager
             obj.PreAmpPowerData = zeros(1, 500);
             obj.PostAmpPowerData = zeros(1, 500);
             obj.Monitor = false;
-            obj.LastTimestamp = 0;
+            obj.LastTimestamp1 = 0;
         end
         
+        % Helper function for putting out tweezers based on the inputs
+        % provided to the property/vlaue table
         function discreteWFM = tweeze(obj)
             % shorthands
             handles = obj.Handles;
@@ -103,6 +143,9 @@ classdef UniformArrayManager < GUIManager
             awg.output(discreteWFM);
         end
         
+        % Starts tweezing based on the input provided in the property/value
+        % table and puts out plots of the theoretical, real power spectrum
+        % and the waveform
         function startTweezing(obj)
             discreteWFM = obj.tweeze();
 
@@ -317,7 +360,7 @@ classdef UniformArrayManager < GUIManager
             end
             % Take sample image from basler to show tweezers
             [success, image, timestamp] = cam.capture();
-            obj.LastTimestamp = timestamp;
+            obj.LastTimestamp1 = timestamp;
             obj.PictureAxes2Image = ...
                     imshow(image, 'Parent', obj.PictureAxes2);
             title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
@@ -331,18 +374,20 @@ classdef UniformArrayManager < GUIManager
             end
             % Take sample image from basler to show tweezers
             [success, image, timestamp] = cam.capture();
-            obj.LastTimestamp = timestamp;
+            obj.LastTimestamp1 = timestamp;
             obj.PictureAxes2Image = ...
                     imshow(image, 'Parent', obj.PictureAxes2);
             title(sprintf('Tweezer Image (Basler #%d)', cam.Index))
         end
         
+        % Gets image from connected basler cameras and displays them to the
+        % ImageFigure in the cameras' corresponding image axes
         function displayImages(obj)
             cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
             [success, image, timestamp] = cam.capture();
             if (success)
                 framerate = 1/...
-                    (timestamp - obj.LastTimestamp);
+                    (timestamp - obj.LastTimestamp1);
                 if (ishandle(obj.ImageFigure))
                     set(obj.PictureAxes2Image, 'CData', image);
                 else 
@@ -354,10 +399,17 @@ classdef UniformArrayManager < GUIManager
                 title(sprintf(['Tweezer Image (Basler #%d, '...
                         'FPS: %0.2f)'], cam.Index, framerate),...
                         'Parent', obj.PictureAxes2)
-                obj.LastTimestamp = timestamp;
+                obj.LastTimestamp1 = timestamp;
             end
         end
         
+        % Optimizes the parameters for each tweezer to maximize intensity
+        % feedback from the basler cameras. 
+        % TODO: Design and implement a robust way of determining the
+        % coordinates of each tweezer from a given basler image. Then,
+        % using these coordinates, calculate the intensity of each
+        % individual tweezer and use this signal to optimize each frequency
+        % component
         function uniformize(obj)
             cam = obj.Application.getDevice(DeviceType.BaslerCamera, 0);
             [success, image, timestamp] = cam.capture();
@@ -373,6 +425,8 @@ classdef UniformArrayManager < GUIManager
             set(obj.PlotAxes2, 'YDir', 'reverse');
         end
         
+        % Helper function for finding the position of tweezers in an image
+        % by fitting the imaged tweezers to centroids
         function coordinates = findCentroids(obj, image, cam)
             I = imbinarize(image,0.05);
 
