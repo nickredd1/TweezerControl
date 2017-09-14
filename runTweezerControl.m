@@ -5,3 +5,5 @@
 % Add UI Layer to path such that we can instantiate a TweezerGUI object
 addpath 'UI'
 newGUI = GUI;
+
+%2017-09-14 Comment by SrTweezer
