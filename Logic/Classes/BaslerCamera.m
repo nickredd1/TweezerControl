@@ -165,9 +165,6 @@ classdef BaslerCamera < Device
                 obj.CameraHandle.Parameters.Item(...
                     'AcquisitionStart').Execute();
                 
-                % Reset sensor parameters
-                obj.resetSensor();
-                
                 % At this point, the camera has been succesfully
                 % initialized so we may set initialized to true
                 obj.Initialized = true;
@@ -178,6 +175,9 @@ classdef BaslerCamera < Device
                  obj.CameraHandle.StreamGrabber.Start(...
                      Basler.Pylon.GrabStrategy.LatestImages, ...
                      Basler.Pylon.GrabLoop.ProvidedByUser);
+                 
+                 % Reset sensor parameters
+                obj.resetSensor();
                 
             catch ME
                 % Display error message

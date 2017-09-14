@@ -150,8 +150,14 @@ function UniformArrayGUI_DeleteFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.UniformArray);
+if (GUIManager.MonitoringPower)
+    GUIManager.monitor();
+end
 if (ishandle(GUIManager.ImageFigure))
     close(GUIManager.ImageFigure)
+end
+if (ishandle(GUIManager.PlotFigure))
+    close(GUIManager.PlotFigure)
 end
 guidata(hObject, handles);
 end
@@ -187,7 +193,7 @@ function UniformizeButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 GUIManager = handles.application.getManager(...
     GUIType.UniformArray);
-%GUIManager.uniformize();
+GUIManager.uniformize();
 end
 
 
